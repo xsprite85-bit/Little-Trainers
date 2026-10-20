@@ -625,7 +625,7 @@ const GL=(()=>{
     out.resetView=()=>{VW.yaw=0;VW.zoom=1;VW.px=0;VW.py=0;VW.pitch=0;frame()};
     out.mount=()=>{anim=null;Object.assign(P,STAND);FT=null;fRun=false;ball.visible=false;
       const el=document.querySelector('.avatar');if(!el){host=null;return}
-      host=el;el.appendChild(canvas);animal=el.dataset.animal||'dog';mood=el.dataset.mood||'happy';
+      host=el;el.appendChild(canvas);if(window.ResizeObserver){if(!out._ro)out._ro=new ResizeObserver(()=>fit());out._ro.disconnect();out._ro.observe(el)}animal=el.dataset.animal||'dog';mood=el.dataset.mood||'happy';
       for(const k in DOGS)DOGS[k].root.visible=animal==='dog'&&DOGS[k]===rigs.dog;rigs.cat.root.visible=animal==='cat';frame();fit();
     };
     function fit(){if(!host)return;const s=Math.max(140,Math.round(host.getBoundingClientRect().width));

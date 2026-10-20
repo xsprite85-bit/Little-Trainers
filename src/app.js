@@ -352,8 +352,8 @@ function analyzeAndShow(x,sr,tag){
 const V={};
 function greet(){const n=S.who?lowNeed(pet()):null,b='היי '+UNAME()+'! אני '+DN()+'.';return n?b+' '+LM(n.k):b+(lia()?' בואו נשחק!':' מה נעשה היום?')}
 const app=$('#app');
-function render(){document.body.dataset.who=S.who||'';{const u=U(),bs=document.body.style;if(u){bs.setProperty('--accent',u.color);bs.setProperty('--accent-ink','#fff')}else{bs.removeProperty('--accent');bs.removeProperty('--accent-ink')}}if(GL.ok&&GL.setBreed)GL.setBreed((S.who&&D().breed)||'poodle');document.body.classList.toggle('nk',NKON());applyLang();setFur();app.innerHTML=(V[S.screen]||V.login)();trNode(app);window.scrollTo(0,0);if(GL.ok){GL.mount();if(S.who)GL.dress(pet().wear);if(GL.dressCat)GL.dressCat(S.who&&petCat()?pet().wear:{});afterMount();if(S.screen==='dress'){const av=$('.avatar');if(av)av.classList.add('dressable')}}if(typeof needBubble==='function')needBubble()}
-function go(s){if(s==='translate'&&U())S.animal=U().animal==='cat'?'cat':'dog';if(s!=='story')S.stI=null;if(s==='safety')S.quiz={lv:null,i:0,ok:0,ans:null};if(typeof cClear==='function')cClear();if(GL.ok&&GL.resetView&&s!==S.screen)GL.resetView();if(typeof gClear==='function'){gClear();G.phase='idle'}if(S.timer.h&&s!=='train'){clearInterval(S.timer.h);S.timer.run=false;S.timer.h=null}S.screen=s;S.res=null;render()}
+function render(){document.body.dataset.who=S.who||'';{const u=U(),bs=document.body.style;if(u){bs.setProperty('--accent',u.color);bs.setProperty('--accent-ink','#fff')}else{bs.removeProperty('--accent');bs.removeProperty('--accent-ink')}}if(GL.ok&&GL.setBreed)GL.setBreed((S.who&&D().breed)||'poodle');document.body.classList.toggle('nk',NKON());applyLang();setFur();app.innerHTML=(V[S.screen]||V.login)()+(S.who&&HUBS[S.screen]?tabbar():'');document.body.classList.toggle('fitmode',isFit());document.body.classList.toggle('hastabs',!!(S.who&&HUBS[S.screen]));trNode(app);window.scrollTo(0,0);if(GL.ok){GL.mount();if(S.who)GL.dress(pet().wear);if(GL.dressCat)GL.dressCat(S.who&&petCat()?pet().wear:{});afterMount();if(S.screen==='dress'){const av=$('.avatar');if(av)av.classList.add('dressable')}}if(typeof needBubble==='function')needBubble()}
+function go(s){if(s!=='train')S.trick=null;if(s==='translate'&&U())S.animal=U().animal==='cat'?'cat':'dog';if(s!=='story')S.stI=null;if(s==='safety')S.quiz={lv:null,i:0,ok:0,ans:null};if(typeof cClear==='function')cClear();if(GL.ok&&GL.resetView&&s!==S.screen)GL.resetView();if(typeof gClear==='function'){gClear();G.phase='idle'}if(S.timer.h&&s!=='train'){clearInterval(S.timer.h);S.timer.run=false;S.timer.h=null}S.screen=s;S.res=null;render()}
 function header(title){return `<div class="top"><button class="back" data-act="home" aria-label="חזרה">→ חזרה</button><div class="who"><span>${esc(title||'')}</span><span class="dot">${esc(INI(U()))}</span></div></div>`}
 
 const langSeg=()=>`<div class="seg lang" role="group" aria-label="Language / שפה" data-notr="1"><button data-act="lang" data-v="he" aria-pressed="${S.lang==='he'}">עברית</button><button data-act="lang" data-v="en" aria-pressed="${S.lang==='en'}">English</button></div>`;
@@ -726,7 +726,7 @@ function gEnd(msg,stars,cls){
   G.phase='feedback';gButtons();const t=$('#gTimer');if(t)t.hidden=true;
   gSay(msg,cls);
   if(stars>0){D().game.stars+=stars;save();const st=$('#gStars');if(st){st.textContent='⭐'.repeat(stars);st.classList.remove('pop');void st.offsetWidth;st.classList.add('pop')}chime();award()}
-  gLater(1500,()=>{if(GL.ok)GL.stand();gLater(700,()=>{G.phase='idle';gButtons();const tag=document.querySelector('.stage~.row .tag');if(tag)tag.textContent='⭐ '+D().game.stars+' כוכבי אילוף';
+  gLater(1500,()=>{if(GL.ok)GL.stand();gLater(700,()=>{G.phase='idle';gButtons();const tag=$('#gStarsTag');if(tag)tag.textContent='⭐ '+D().game.stars+' כוכבי אילוף';
     document.querySelectorAll('.gsign').forEach(b=>{const dots=b.querySelectorAll('.lvl i');dots.forEach((d,i)=>d.classList.toggle('on',gK(b.dataset.id)>i))})})})}
 function gTimeout(){if(G.phase!=='window')return;
   if(!G.correct)gEnd('צדקת שלא נתת חטיף. '+esc(DN())+' עשה משהו אחר. ננסה שוב!',1);
@@ -1418,6 +1418,131 @@ Object.assign(A,{
  stRead:()=>{const ps=[...document.querySelectorAll('.story h2,.story p')].map(x=>x.innerText).join(' ');speak(ps,null,true)},
  stNav:e=>{S.stI=(S.stI==null?storyIdx():S.stI)+(+e.dataset.v);render()},
  stDone:()=>{const d=D();if(d.story&&d.story.day===dayKey())return;d.story={day:dayKey()};addStars(1);render();speak('כל הכבוד! קראנו סיפור.','yip')}});
+
+/* ======== גרסה 18: כל משחק במסך אחד, סרגל לשוניות, מידע במגירה ======== */
+const HUBS={home:1,play:1,learnhub:1,me:1};
+const HUBOF={game:'play',mem:'play',course:'play',care:'play',dress:'play',color:'play',translate:'learnhub',train:'learnhub',safety:'learnhub',learn:'learnhub',story:'learnhub',stars:'me',coll:'me',album:'me',cert:'me',real:'me',prof:'me'};
+const FIT=/^(home|play|learnhub|me|game|care|dress|mem|course|color|learn|album|coll|login|translate)$/;
+const isFit=()=>FIT.test(S.screen)&&!(S.screen==='translate'&&S.res)&&!(S.screen==='home'&&S.editName)&&!(S.screen==='album'&&S.albV!=null);
+function tabbar(){const cur=HUBS[S.screen]?S.screen:(HUBOF[S.screen]||'home');
+  return `<nav class="tabbar" aria-label="ניווט">${[['home','🏠','בית'],['play','🎮','משחקים'],['learnhub','📚','לומדים'],['me','⭐','שלי']].map(([k,e,n])=>`<button data-act="go" data-s="${k}" aria-current="${cur===k?'page':'false'}"><span aria-hidden="true">${e}</span><b>${n}</b></button>`).join('')}</nav>`}
+function header(title,info){const hub=HUBOF[S.screen]||'home';
+  return `<div class="top"><button class="back" data-act="go" data-s="${hub}" aria-label="חזרה">→ חזרה</button><div class="who"><span class="ttl">${esc(title||'')}</span>${info?`<button class="back sm" data-act="info" aria-label="מידע">ℹ️</button>`:''}<span class="dot">${esc(INI(U()))}</span></div></div>`+
+   (info?`<div class="sheet" id="sheet" hidden><div class="sheetc" role="dialog" aria-label="מידע">${info}<button class="btn ghost" data-act="sheetX">סגירה</button></div></div>`:'')}
+A.info=()=>{const s=$('#sheet');if(s)s.hidden=false};
+A.sheetX=()=>{const s=$('#sheet');if(s)s.hidden=true};
+document.addEventListener('click',e=>{if(e.target&&e.target.id==='sheet')e.target.hidden=true});
+const hubTop=t=>`<div class="top"><div class="who"><span class="ttl">${t}</span></div><div class="who"><button class="back sm" data-act="login" aria-label="החלפת משתמש">⇄</button><span class="dot">${esc(INI(U()))}</span></div></div>`;
+function dailyPill(){const d=X();dailyCheck();const {ch,val}=dailyOf();
+  return `<div class="dpill ${d.daily.done?'ok':''}" role="status"><span aria-hidden="true">📅</span><span class="t">${ch.t}</span><b>${d.daily.done?'✅':val+'/'+ch.n}</b></div>`}
+
+/* ---------- מסכי הבית ---------- */
+V.home=()=>{const g=greet();
+  return `<div class="top"><button class="back" data-act="login">→ החלפת משתמש</button><div class="who"><span class="dot">${esc(INI(U()))}</span></div></div>
+  <div class="avatarWrap">${avatar('dog','happy')}
+   ${S.editName?`<form class="card namebox" id="nameForm"><label for="dogName"><b>איך קוראים לכלב?</b></label><input id="dogName" maxlength="24" value="${esc(DN())}" autocomplete="off" enterkeyhint="done"><div class="grid2"><button class="btn good" type="submit">שמירה</button><button class="btn ghost" type="button" data-act="nameCancel">ביטול</button></div></form>`
+   :`<div class="row nmrow"><h2>${esc(DN())}</h2><button class="back sm" data-act="nameEdit" aria-label="שינוי שם הכלב">✏️</button></div>`}
+   <button class="bubble ${lia()?'lia':''}" data-act="hello" style="border:0;color:inherit;font:inherit">${g}</button></div>
+  ${dailyPill()}
+  <button class="btn sun big" data-act="go" data-s="game">🎮 משחק: מאלפים את ${esc(DN())}</button>`};
+const tile=(s,e,n,cls,x)=>`<button class="tile ${cls||''}" data-act="go" data-s="${s}" ${x||''}><span class="ic">${e}</span>${n}</button>`;
+V.play=()=>`${hubTop('🎮 משחקים')}<div class="hub">
+  ${tile('game','🎮','משחק אילוף','t2')}${tile('mem','🧩','משחק זיכרון')}${tile('course','🚧','מסלול מכשולים')}
+  ${tile('care','🐾','לטפל ב'+esc(DN()),'care '+(lowNeed(pet())?'alert':''))}${tile('dress','👕','ארון בגדים')}${tile('color','🖍️','מצב צביעה')}</div>`;
+V.learnhub=()=>`${hubTop('📚 לומדים')}<div class="hub">
+  ${tile('translate','👂','מה הכלב אומר?','t1')}${tile('train','🦴','אילוף','t2')}${tile('learn','📚','כרטיסיות לימוד')}
+  ${tile('safety','🛡️','פינת הבטיחות')}${tile('story','📖','הסיפור של היום')}</div>`;
+V.me=()=>`${hubTop('⭐ שלי')}<div class="hub">
+  ${tile('stars','⭐','הכוכבים שלי','t2')}${tile('coll','🏆','אוסף הגזעים')}${tile('album','🖼️','האלבום שלי')}
+  ${tile('cert','🏅','תעודה')}${tile('real','🐶','הכלב שלנו','','data-nocat="1"')}${tile('prof','👤','הפרופיל שלי')}</div>`;
+
+/* ---------- כניסה ---------- */
+V.login=()=>`
+<div class="avatarWrap">${avatar('dog','happy')}<h1><span class="logo" aria-hidden="true">🐶🐱</span> מאלפים קטנים</h1><p class="muted">${S.users.length?'מי משחק היום?':'בואו נפתח משתמש ראשון!'}</p></div>
+<div class="ulist">${S.users.map(u=>`<button class="card who-card" data-act="pick" data-who="${u.id}" style="border-color:${u.color}"><span class="big-dot" style="background:${u.color};color:#fff">${esc(INI(u))}</span><span><h2>${esc(u.name)}</h2><span class="muted">${u.animal==='cat'?'🐱':'🐕'} ${esc((S.data[u.id]&&S.data[u.id].dogName)||'')} · ${simpleOf(u)?'מצב פשוט':'מצב מתקדם'}</span></span></button>`).join('')}</div>
+<div class="grid2"><button class="btn" data-act="newu">➕ משתמש חדש</button><button class="btn ghost" data-act="parent">🔒 להורים</button></div>
+${langSeg()}`;
+
+/* ---------- משחק אילוף ---------- */
+V.game=()=>{const d=D();const list=GSIGNS.filter(s=>(!lia()||GLIA.includes(s.id))&&(!petCat()||!['bang','howl'].includes(s.id)));
+ const info=`<h3>איך זה עובד?</h3><p>כמו באילוף אמיתי: הקליק אומר לכלב "בדיוק את זה!", והחטיף צריך להגיע מהר. כלבים מחברים בין מעשה לפרס רק בשנייה או שתיים. סימן ש${esc(DN())} עוד לא מכיר טוב, הוא לפעמים מתבלבל ועושה משהו אחר. אז לא נותנים חטיף, לוחצים "לא הפעם" ומנסים שוב.</p>${lia()?'':'<p class="muted">הנקודות: כמה טוב '+esc(DN())+' מכיר כל סימן</p>'}`;
+ return `${header(lia()?'משחק אילוף':'משחק: מאלפים את '+esc(DN()),info)}
+ <div class="stage" id="stage">${avatar('dog','happy')}<div class="ghand" id="gHand" aria-hidden="true"></div><div class="gtimer" id="gTimer" hidden><i></i></div><div class="gstars" id="gStars" aria-live="polite"></div><span class="tag ovtag" id="gStarsTag">⭐ ${d.game.stars} כוכבי אילוף</span></div>
+ <div class="bubble ${lia()?'lia':''}" id="gMsg">${lia()?'בחרי סימן, ואחרי ש'+esc(DN())+' עושה אותו, תני לו חטיף!':'בחרו סימן. כש'+esc(DN())+' מבצע: קליק, ואז גוררים חטיף לפה. יש לכם '+(GW()>1?3:2)+' שניות!'}</div>
+ <div class="gsigns hrow">${list.map(s=>`<button class="gsign" data-act="gSign" data-id="${s.id}"><span class="h">${s.hand}</span><b>${s.n}</b>${lia()?'':`<span class="lvl">${[1,2,3,4,5].map(i=>`<i class="${gK(s.id)>=i?'on':''}"></i>`).join('')}</span>`}</button>`).join('')}</div>
+ <div class="gtray dock">
+   <button class="clicker small" data-act="gClick" aria-label="קליק">קליק</button>
+   <div class="treat" id="gTreat" role="button" tabindex="0" aria-label="חטיף. גוררים אל הכלב או לוחצים">🍖</div>
+   <button class="btn warn" id="gNo" data-act="gNo" hidden>✋ לא הפעם</button>
+ </div>`};
+
+/* ---------- טיפול ---------- */
+V.care=()=>{const p=pet(),low=lowNeed(p);
+  const msg=low?LM(low.k):(lia()?'אני מרגיש מצוין! תודה '+UNAME()+'!':'אני מרגיש מצוין. תודה שאת דואגת לי!');
+  const strip='🌳 🌷 🏡 🌳 🌼 🌲 ⛲ 🌷 '.repeat(2);
+  const info=`<div class="note" id="cFact">💡 כל פעולה מלמדת משהו על טיפול אמיתי בכלב. לוחצים ובודקים.</div><p class="muted">יום מושלם: כשכל הלבבות כמעט מלאים (ארבעה מתוך חמישה), מקבלים כוכב אחד פעם ביום. הכוכבים משמשים לקניית בגדים.</p><p class="muted">${lia()?'מחליקים את הכדור למעלה וזורקים!':'מחליקים את הכדור למעלה כדי לזרוק. החלקה ארוכה זורקת רחוק יותר.'}</p>`;
+  return `${header('לטפל ב'+DN(),info)}
+  <div class="stage care" id="cstage"><div class="bgwalk" aria-hidden="true"><div class="track"><span>${strip}</span><span>${strip}</span></div></div>
+   <div class="night" aria-hidden="true"><span class="moon">🌙</span></div>${avatar('dog',low?'sad':'happy')}<div class="zzz" aria-hidden="true">💤</div><span class="tag ovtag" id="cWal">⭐ ${wallet()} כוכבים</span></div>
+  <div class="bubble ${lia()?'lia':''}" id="cMsg">${msg}</div>
+  <div class="meter" id="bprog" hidden><i></i></div>
+  <div class="needs six">${NEEDS.map(NI).map(n=>`<button class="need" data-act="care" data-k="${n.k}" aria-label="${n.n}"><span class="ic">${n.ic}</span><span class="hr" aria-hidden="true">${[0,1,2,3,4].map(i=>`<i class="${i<hearts(p[n.k])?'on':''}"></i>`).join('')}</span><span class="nm">${n.n}</span></button>`).join('')}</div>
+  <div class="dock toyrow"><div class="toy" id="toy" role="button" tabindex="0" aria-label="זורקים כדור">${petCat()?'🧶':'🎾'}</div><span class="muted">${lia()?'מחליקים את הכדור למעלה וזורקים!':'מחליקים את הכדור למעלה כדי לזרוק.'}</span><button class="btn sun" data-act="go" data-s="dress">👕</button></div>`};
+
+/* ---------- ארון בגדים ---------- */
+const dressOld=V.dress;
+V.dress=()=>{const h=dressOld(),a=h.indexOf('<div class="seg wrap"'),b=h.lastIndexOf('<button class="btn sun" data-act="go" data-s="game">');
+  const help=`<p class="muted">${lia()?'אצבע אחת מסובבת. שתיים מקרבות.':'👆 אצבע אחת מסובבת ומטה · ✌️ שתי אצבעות מקרבות ומזיזות · הקשה כפולה מאפסת'}</p><p class="muted">כוכבים מקבלים במשחק האילוף ובטיפול היומי</p><button class="btn sun" data-act="go" data-s="game">🎮 לצבור כוכבים במשחק</button>`;
+  return `${header('ארון הבגדים',help)}
+  <div class="stage">${avatar('dog','happy')}<span class="tag ovtag" id="cWal">⭐ ${wallet()} כוכבים</span>
+   <div class="ovbtns"><button class="back sm" data-act="petShot" aria-label="צילום לאלבום">📸</button>${GL.ok?'<button class="back sm" data-act="vreset" aria-label="איפוס">↺</button>':''}</div></div>
+  ${a>=0&&b>a?h.slice(a,b):''}`};
+
+/* ---------- זיכרון ---------- */
+const memOld=V.mem;
+V.mem=()=>{const m=S.mm;if(!m)return memOld();const L=MML[m.lv],n=L.n*2,rows=Math.ceil(n/L.c);
+  return `${header('משחק זיכרון')}
+  <div class="row" style="justify-content:space-between"><span class="tag">${L.ic} ${L.t}</span><span class="tag">מהלכים: <b id="mmMoves">${m.moves}</b></span></div>
+  <div class="mbox"><div class="mgrid c${L.c}" id="mmGrid" style="--ar:${L.c}/${rows};grid-template-rows:repeat(${rows},minmax(0,1fr))">${mmGrid()}</div></div>
+  <div class="bubble ${lia()?'lia':''}" id="mmMsg">${m.done?'':'פותחים שני קלפים. אם הם זהים, הם נשארים פתוחים.'}</div>
+  <div class="grid2 dock"><button class="btn ghost" data-act="mmAgain">🔁 משחק חדש</button><button class="btn ghost" data-act="mmMenu">🎚️ שינוי רמה</button></div>`};
+
+/* ---------- מסלול מכשולים ---------- */
+const courseOld=V.course;
+V.course=()=>{const o=S.ob;
+  const rules=`<h3>הפקודות במסלול</h3><ul class="rules">${OBS.slice(0,5).map(x=>`<li><span style="font-size:1.6rem">${x.e}</span>${x.n}: ${sgn(x.sg).n}</li>`).join('')}</ul>`;
+  if(!o)return `${header('מסלול מכשולים',rules)}
+  <div class="avatarWrap">${avatar('dog','happy')}<div class="bubble ${lia()?'lia':''}">${esc(DN())} רץ במסלול! בכל מכשול נותנים פקודה אחרת.</div></div>
+  <button class="btn ghost" data-act="info">💡 הפקודות במסלול</button>
+  <button class="btn sun big" data-act="obGo">🏁 מתחילים!</button>`;
+  return `${header('מסלול מכשולים',rules)}
+  <div class="stage" id="stage">${avatar('dog','happy')}</div>
+  <div class="otrack" id="obTrack">${obTrack()}</div>
+  <div class="bubble ${lia()?'lia':''}" id="obMsg">${obPrompt()}</div>
+  <div class="gsigns hrow" id="obCmds">${OBSG.map(id=>{const s=sgn(id);return `<button class="gsign" data-act="obCmd" data-id="${id}"><span class="h">${s.hand}</span><b>${s.n}</b></button>`}).join('')}</div>
+  <div class="grid2 dock">${ageBand()==='big'?`<button class="btn ghost" data-act="obHint">💡 רמז</button>`:''}<button class="btn ghost" data-act="obQuit">${o.done?'🔁 מסלול חדש':'↩ יציאה'}</button></div>`};
+
+/* ---------- מה הכלב אומר ---------- */
+const trOld=V.translate;
+V.translate=()=>{if(S.res)return trOld();const sm=Engine.SAMPLES[S.animal];
+  const info=`<p class="muted">${MIC==='native'?'נפתח מקליט הקול של הטלפון. מקליטים כמה שניות את הכלב, לוחצים סיום, והניתוח מתחיל. ההקלטה לא נשמרת באפליקציה.':'ההקלטה נשארת במכשיר ונמחקת מיד אחרי הניתוח.'}</p>
+   ${lia()?'':`<label class="btn ghost" for="upl">📁 העלאת הקלטה מהמכשיר</label><input class="file" id="upl" type="file" accept="audio/*" aria-label="העלאת קובץ שמע">`}
+   ${S.animal==='cat'?`<p class="note">אין חתול בבית, אז החתול מדגים בצלילי דוגמה.</p>`:''}`;
+  return `${header(lia()?'מה הוא אומר?':'מתרגמים קולות',info)}
+  <div class="seg" role="group" aria-label="בחירת חיה"><button data-act="animal" data-a="dog" aria-pressed="${S.animal==='dog'}">🐕 כלב</button><button data-act="animal" data-a="cat" aria-pressed="${S.animal==='cat'}">🐈 חתול</button></div>
+  <div class="avatarWrap">${avatar(S.animal,'happy')}</div>${S.animal==='cat'?catPick().replace('class="chips"','class="chips hrow"'):''}
+  <div class="bubble ${lia()?'lia':''}">${lia()?'לחצו והקשיבו!':'לחצו על המיקרופון ליד '+(S.animal==='dog'?'הכלב':'החתול')+', או בחרו דוגמה.'}</div>
+  <div class="dock microw">
+   ${MIC==='native'?`<label class="mic" for="cap" aria-label="הקלטה בטלפון">🎤</label><input class="file" id="cap" type="file" accept="audio/*" capture>`
+    :`<button class="mic ${S.busy?'rec':''}" data-act="mic" aria-label="הקלטה של 6 שניות">${S.busy?'<span id="cd" style="font-size:2rem;font-family:var(--f-display)">6</span>':'🎤'}</button>`}
+   <div class="samples hrow">${sm.map(s=>`<button class="sample" data-act="sample" data-id="${s.id}"><span class="pic">${s.pic}</span>${esc(s.label)}</button>`).join('')}</div></div>
+  <p class="muted mmsg" id="micMsg"></p>`};
+
+/* ---------- כרטיסיות, אלבום, אוסף ---------- */
+const learnOld=V.learn;
+V.learn=()=>{let h=learnOld();if(S.lr&&!S.lr.quiz)h=h.replace('<div class="seg wrap" role="group" aria-label="נושא">','<div class="seg hrow" role="group" aria-label="נושא">');return h};
+const albumOld=V.album;
+V.album=()=>{let h=albumOld();return h.replace('<div class="agrid">','<div class="agrid hrow">')};
 
 render();
 })();

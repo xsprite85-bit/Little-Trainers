@@ -327,3 +327,79 @@ textarea.bk{width:100%;border:2px solid var(--line);border-radius:14px;padding:8
 .sgrid b{font:700 1.4rem/1.2 var(--f-display);font-variant-numeric:tabular-nums}.sgrid span{font-size:.75rem}
 .played{align-items:center;text-align:center}.clk.big{font-size:3rem}
 @media (max-width:420px){.sgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* ---- גרסה 18: מסך אחד למשחק, סרגל לשוניות ---- */
+.back.sm{min-height:40px;min-width:40px;padding:4px 10px;border-radius:14px}
+.top .ttl{max-width:44vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow{display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding:2px 2px 8px;flex:none;-webkit-overflow-scrolling:touch;scrollbar-width:thin;overscroll-behavior-x:contain}
+.hrow>*{scroll-snap-align:start;flex:none}
+.gsigns.hrow{display:flex}.gsigns.hrow .gsign{width:auto;min-width:118px;min-height:56px;padding:6px 12px}
+.gsigns.hrow .gsign .h{font-size:1.6rem}
+.dpill{display:flex;align-items:center;gap:8px;background:var(--card);border:2px solid var(--line);border-radius:999px;padding:6px 14px;font-size:.92rem;box-shadow:var(--shadow);flex:none;min-width:0}
+.dpill .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.dpill b{font-variant-numeric:tabular-nums}
+.dpill.ok{border-color:var(--good)}
+.nmrow{justify-content:center;gap:8px}
+.ovtag{position:absolute;top:6px;inset-inline-start:6px;z-index:4;background:var(--card)}
+.tabbar{position:fixed;inset-inline:0;bottom:0;z-index:8;display:flex;justify-content:space-around;gap:4px;background:var(--card);border-top:2px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -4px 14px rgba(27,42,78,.08)}
+.tabbar button{flex:1;max-width:140px;display:flex;flex-direction:column;align-items:center;font-size:.8rem;min-height:54px;border-radius:16px;color:var(--ink2);font-weight:700}
+.tabbar button span{font-size:1.55rem;line-height:1.15}
+.tabbar button[aria-current=page]{color:var(--accent);background:var(--soft)}
+.hastabs .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+.hub{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;grid-auto-rows:minmax(0,1fr);flex:1 1 0;min-height:0}
+.hub .tile{min-height:0;height:100%;padding:8px}
+.hub .tile:last-child:nth-child(odd){grid-column:span 2}
+.sheet{position:fixed;inset:0;z-index:30;background:rgba(10,18,40,.45);display:flex;align-items:flex-end;justify-content:center}
+.sheetc{background:var(--card);border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom,0px));max-height:80vh;overflow:auto;width:100%;max-width:560px;display:flex;flex-direction:column;gap:10px;box-shadow:0 -8px 30px rgba(0,0,0,.25)}
+.mmsg:empty{display:none}
+.needs.six{grid-template-columns:repeat(6,minmax(0,1fr));gap:6px}
+.needs.six .need{min-height:0;padding:6px 2px;border-radius:16px;gap:2px}
+.needs.six .need .ic{font-size:1.6rem}.needs.six .need .nm{font-size:.72rem;line-height:1.1}
+.needs.six .hr i::before{font-size:.62rem}
+.toyrow .toy{width:64px;height:64px;font-size:2.1rem}.toyrow .btn{min-height:52px;padding:8px 14px;flex:none}
+.microw{display:flex;align-items:center;gap:10px}
+.microw .mic{width:84px;height:84px;font-size:2.2rem;margin:0;flex:none}
+.microw .samples{flex:1;min-width:0;display:flex}
+.microw .sample{width:86px;min-height:80px}
+.mbox{flex:1 1 0;min-height:0;display:flex;align-items:center;justify-content:center}
+/* מצב מסך אחד */
+body.fitmode{height:100dvh;overflow:hidden;padding-block:6px 0}
+body.fitmode #app{height:100%;overflow:hidden;gap:8px;padding-bottom:8px;box-sizing:border-box}
+body.fitmode.hastabs #app{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+.fitmode .top .back{min-height:42px;padding:4px 12px}
+.fitmode .avatarWrap,.fitmode .stage{flex:1 1 0;min-height:120px;gap:6px}
+.fitmode .avatarWrap .avatar,.fitmode .stage .avatar{flex:1 1 0;min-height:0;height:100%;width:auto;max-width:100%;aspect-ratio:1;align-self:center}
+.fitmode .bubble{font-size:1.02rem;padding:10px 14px;flex:none}
+.fitmode .bubble.lia{font-size:1.25rem}
+.fitmode .avatarWrap h1{font-size:1.5rem}
+.fitmode .avatarWrap h2{font-size:1.25rem}
+.fitmode .ulist{display:flex;flex-direction:column;gap:10px;overflow:auto;flex:0 1 auto;min-height:0;max-height:42%}
+.fitmode .who-card{padding:12px}.fitmode .who-card .big-dot{width:56px;height:56px;font-size:1.8rem}
+.fitmode .gtray{gap:14px}.fitmode .clicker.small{width:88px;height:88px;font-size:1.2rem}.fitmode .treat{width:76px;height:76px;font-size:2.4rem}
+.fitmode .items{display:flex;overflow-x:auto;overflow-y:hidden;gap:8px;padding:2px 2px 8px;flex:none;scroll-snap-type:x proximity}
+.fitmode .items>*{flex:none;width:104px;min-height:116px;scroll-snap-align:start}
+.fitmode .seg.wrap{flex-wrap:nowrap;overflow-x:auto;flex:none}.fitmode .seg.wrap button{flex:none;padding-inline:12px;min-height:44px}
+.fitmode .seg{flex:none}.fitmode .seg button{min-height:44px}
+.fitmode .avatarWrap>.row{flex:none}
+.fitmode .mgrid{height:100%;max-width:100%;aspect-ratio:var(--ar,1);width:auto;gap:8px}
+.fitmode .mgrid .mc{aspect-ratio:auto;width:100%;height:100%;font-size:clamp(1.4rem,6vmin,2.4rem)}
+.fitmode .cwrap{flex:1 1 0;min-height:0;align-items:center;justify-content:center;padding:8px}
+.fitmode .csvg{height:100%;width:auto;max-width:100%}
+.fitmode .pal{flex:none}.fitmode .pc{width:36px;height:36px}
+.fitmode .lcard{flex:1 1 0;min-height:0;overflow:auto;gap:8px}
+.fitmode .lcard .avatarWrap{min-height:140px}
+.fitmode .lcard .lemo{font-size:3.4rem}
+.fitmode .agrid.hrow{display:flex}.fitmode .agrid.hrow .athumb{width:84px;height:84px}
+.fitmode .otrack{flex:none;padding:0}
+.fitmode .dock{flex:none}
+.fitmode .card.nu{flex:none}
+.fitmode .grid2>.item{min-height:110px}
+.fitmode details{flex:none}
+/* מסכי קריאה: דמות קטנה וכותרת דביקה */
+body:not(.fitmode) #app>.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:6;background:var(--bg);padding-block:6px}
+body:not(.fitmode) #app>.avatarWrap>.avatar{width:min(46vw,190px)}
+@media (min-height:900px){.fitmode .bubble{font-size:1.1rem}}
+html:has(body.fitmode){overflow:hidden}
+body.fitmode{box-sizing:border-box}
+.ovbtns{position:absolute;top:6px;inset-inline-end:6px;z-index:4;display:flex;gap:6px}
+.fitmode .stage>p.muted,.fitmode #app>p.muted{flex:none;font-size:.85rem;margin:0}
+body.fitmode{margin:0}
