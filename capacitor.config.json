@@ -1,0 +1,6 @@
+{
+  "appId": "com.tinkerdoodle.littletrainers",
+  "appName": "מאלפים קטנים",
+  "webDir": "app",
+  "android": { "allowMixedContent": false }
+}

@@ -156,6 +156,33 @@ const GL=(()=>{
     const CATB={tabby:{fur:0xd78a42,str:true,white:0xf2e6d8,eye:0xc9b23a},siamese:{fur:0x4a3326,body:0xeadcc8,white:0xeadcc8,eye:0x4f93e0},black:{fur:0x1d1b1e,body:0x1d1b1e,white:0x1d1b1e,eye:0xc2c43a},
       grey:{fur:0x7d8590,body:0x7d8590,white:0x8d959f,eye:0xd88a26,chub:1.12},persian:{fur:0xf3efe8,body:0xf3efe8,white:0xffffff,eye:0x4a8fd8,chub:1.15},tuxedo:{fur:0x1f1d1f,body:0x1f1d1f,white:0xf4f1ec,eye:0x9ccf3a}};
     out.catBreeds=()=>Object.keys(CATB);
+    /* ---- אביזרים לחתול: כובעים, קולרים, פפיון ומשקפיים ---- */
+    const CACC=(()=>{const R=rigs.cat,H=R.head,hb=H.userData.abs,rb=R.root.userData.abs||new THREE.Vector3(),A={};
+      const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:lin(c),roughness:.5},o||{}));
+      const at=(g,p,par)=>{const b=par===H?hb:(par.userData.abs||new THREE.Vector3());g.position.set(p[0]-b.x,p[1]-b.y,p[2]-b.z);par.add(g);g.visible=false;return g};
+      // כובע מסיבה
+      {const g=new THREE.Group(),c=new THREE.Mesh(new THREE.ConeGeometry(.055,.14,24),M(0xff5fa2));c.position.y=.07;g.add(c);
+        const pom=new THREE.Mesh(new THREE.SphereGeometry(.018,12,10),M(0xfff3a0));pom.position.y=.145;g.add(pom);
+        const st=new THREE.Mesh(new THREE.TorusGeometry(.05,.008,8,24),M(0xfff3a0));st.rotation.x=Math.PI/2;st.position.y=.01;g.add(st);g.rotation.z=-.15;A.party=at(g,[.39,.735,0],H)}
+      // צילינדר
+      {const g=new THREE.Group(),m=M(0x1d1d24,{roughness:.35}),c=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.08,24),m);c.position.y=.05;g.add(c);
+        const b=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.008,28),m);g.add(b);const r=new THREE.Mesh(new THREE.CylinderGeometry(.046,.046,.016,24),M(0xd23a4a));r.position.y=.018;g.add(r);g.rotation.z=-.12;A.top=at(g,[.39,.738,0],H)}
+      // כתר
+      {const g=new THREE.Group(),m=M(0xf2c23a,{metalness:.6,roughness:.3}),c=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.03,24,1,true),m);c.material.side=THREE.DoubleSide;g.add(c);
+        for(let i=0;i<6;i++){const a=i/6*6.283,sp=new THREE.Mesh(new THREE.ConeGeometry(.012,.035,8),m);sp.position.set(Math.cos(a)*.05,.03,Math.sin(a)*.05);g.add(sp)}g.rotation.z=-.12;A.crown=at(g,[.39,.74,0],H)}
+      // קולרים ופפיונים על הצוואר
+      const nd=new THREE.Vector3(.07,.1,0).normalize(),nq=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),nd);
+      [['collarR',0xd8323f],['collarB',0x2f6fe0]].forEach(([id,c])=>{const g=new THREE.Group(),t=new THREE.Mesh(new THREE.TorusGeometry(.075,.013,10,32),M(c));t.quaternion.copy(nq);g.add(t);
+        const bell=new THREE.Mesh(new THREE.SphereGeometry(.016,12,10),M(0xf2c23a,{metalness:.7,roughness:.25}));bell.position.set(.06,-.045,0);g.add(bell);A[id]=at(g,[.315,.53,0],R.body)});
+      [['bowR',0xd8323f],['bowB',0x2f6fe0]].forEach(([id,c])=>{const g=new THREE.Group(),m=M(c);[1,-1].forEach(sd=>{const k=new THREE.Mesh(new THREE.ConeGeometry(.028,.05,14),m);k.rotation.x=sd*Math.PI/2;k.position.z=sd*.024;k.scale.set(1,1,.55);g.add(k)});
+        const kn=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),m);g.add(kn);A[id]=at(g,[.37,.5,0],R.body)});
+      // משקפיים
+      [['sun',0x111318,0x111318],['heart',0xff4f8b,0xff9cc0]].forEach(([id,fr,ln])=>{const g=new THREE.Group(),fm=M(fr,{roughness:.3}),lm=M(ln,{roughness:.15,transparent:true,opacity:.85});
+        [1,-1].forEach(sd=>{const r=new THREE.Mesh(new THREE.TorusGeometry(.024,.004,8,24),fm);r.rotation.y=Math.PI/2;r.position.z=sd*.052;g.add(r);const l=new THREE.Mesh(new THREE.CircleGeometry(.022,20),lm);l.rotation.y=Math.PI/2;l.position.set(.001,0,sd*.052);g.add(l)});
+        const br=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,.05,6),fm);br.rotation.x=Math.PI/2;g.add(br);g.scale.setScalar(1.3);A[id]=at(g,[.556,.672,0],H)});
+      return A})();
+    out.catItems=()=>Object.keys(CACC);
+    out.dressCat=w=>{w=w||{};const on=new Set([w.hat,w.neck,w.face].filter(Boolean));for(const k in CACC)CACC[k].visible=on.has(k)};
     out.setCatBreed=id=>{const b=CATB[id]||CATB.tabby,R=rigs.cat;R.furM.color.copy(lin(b.fur));R.skinM.color.copy(lin(b.fur)).multiplyScalar(.78);R.whiteM.color.copy(lin(b.white));
       if(b.str){R.stripeM.map=R.stripeTex;R.stripeM.color.setRGB(1,1,1)}else{R.stripeM.map=null;R.stripeM.color.copy(lin(b.body))}R.stripeM.needsUpdate=true;
       R.eyes.forEach(e=>{const m=e.children[0]&&e.children[0].material;if(m)m.color.copy(lin(b.eye))});const k=b.chub||1;R.body.scale.set(1,k,k)};
@@ -530,7 +557,7 @@ const GL=(()=>{
       scared:{hz:-.26,ez:-.72,ex:.05,tb:2.0,wa:.04,ws:22,ey:1.22,es:1.18,jaw:0,tg:0,cr:.1}};
     const cur={};Object.keys(T.happy).forEach(k=>cur[k]=T.happy[k]);
     /* ---------- טריקים: תנוחות ואנימציה בפריימים ---------- */
-    const STAND={fo:0,ty:0,tr:0,fn:0,ff:0,rn:0,rf:0,hp:0,ht:0,spin:0,roll:0,jy:0,tg:0,eye:1};
+    const STAND={fo:0,ty:0,tr:0,fn:0,ff:0,rn:0,rf:0,hp:0,ht:0,spin:0,roll:0,jy:0,tg:0,eye:1,pz:0,sq:0};
     const SIT={ty:-.3,tr:.5,fn:0,ff:0,rn:1.35,rf:1.35,hp:-.32};
     const DOWN={ty:-.31,tr:0,fn:1.45,ff:1.45,rn:1.45,rf:1.45,hp:.05};
     const K=(...seg)=>seg; // [משך במילישניות, תנוחה חלקית]
@@ -559,7 +586,18 @@ const GL=(()=>{
       segs.forEach(([d,pose])=>{const to={...from,...pose};frames.push({t0:t,t1:t+d,from,to});from=to;t+=d});
       anim={frames,start:performance.now(),total:t};return t;
     }
-    out.play=name=>{if(animal!=='dog'||!TR[name])return 600;Object.assign(P,{spin:P.spin%6.283,roll:P.roll%6.283});return startAnim(TR[name])};
+    /* ---- טריקים לחתול: הגוף כולו נוטה (pz), מתכווץ (sq), קופץ ומסתובב ---- */
+    const CSIT={pz:.32,hp:-.18},CDOWN={sq:.28,hp:-.06};
+    const CTR={sit:K([600,CSIT]),down:K([550,CDOWN]),paw:K([500,CSIT],[450,{pz:.48,ht:.22}],[350,{pz:.4}]),hi5:K([500,CSIT],[450,{pz:.55,ht:.18,hp:.05}]),
+      spin:K([1300,{spin:6.283}]),touch:K([330,{hp:-.32}],[250,{hp:-.08}],[250,{hp:-.32}]),bow:K([600,{pz:-.26,hp:.22,sq:.08}]),
+      roll:K([500,CDOWN],[1100,{roll:6.283}]),bang:K([450,CDOWN],[550,{roll:1.571,eye:.08,tg:1}]),
+      jump:K([260,{sq:.16}],[330,{jy:.45,sq:-.08}],[330,{jy:0,sq:0}]),
+      dance:K([260,{jy:.11,pz:.12,hp:.2}],[260,{jy:0,pz:-.08,hp:-.2}],[260,{jy:.11,pz:.12,hp:.2}],[260,{jy:0,pz:-.08,hp:-.2}],[420,{jy:.14,pz:0,hp:0,spin:6.283}],[300,{jy:0,spin:6.283}]),
+      beg:K([600,CSIT],[500,{pz:.62,hp:.15}],[300,{pz:.55}],[300,{pz:.62}]),
+      shake:K([110,{pz:.06,spin:.4}],[110,{pz:-.06,spin:-.4}],[110,{pz:.06,spin:.4}],[110,{pz:-.06,spin:-.4}],[200,{pz:0,spin:0}]),
+      howl:K([500,CSIT],[900,{hp:.45,tg:1}],[700,{hp:.45,tg:1}],[400,CSIT]),
+      sleep:K([700,{...CDOWN,eye:.08,ht:.25}]),confused:K([400,{ht:.38,hp:.08}],[500,{ht:-.3}],[400,{ht:.3}])};
+    out.play=name=>{const T2=animal==='cat'?CTR:TR;if(!T2[name])return 600;Object.assign(P,{spin:P.spin%6.283,roll:P.roll%6.283});return startAnim(T2[name])};
     out.stand=()=>{P.spin%=6.283;P.roll%=6.283;if(P.roll>3.14)P.roll-=6.283;return startAnim([[650,STAND]])};
     out.eat=()=>{eatUntil=performance.now()+1300};
     out.mouth=()=>{const R=rigs[animal];if(!host)return null;R.root.updateMatrixWorld(true);
@@ -607,7 +645,7 @@ const GL=(()=>{
       if(anim){const e=now-anim.start;for(const f of anim.frames){if(e>=f.t0&&e<f.t1||f===anim.frames[anim.frames.length-1]){const k=ease(Math.min(1,Math.max(0,(e-f.t0)/(f.t1-f.t0))));for(const key in f.to)P[key]=f.from[key]+(f.to[key]-f.from[key])*k;if(e<f.t1)break}}if(e>anim.total)anim=null}
       const eating=now<eatUntil;
       R.root.rotation.y=-.82+Math.sin(t*.45)*.14*(anim?0.3:1)+P.spin+VW.yaw;
-      R.root.rotation.z=cur.cr;
+      R.root.rotation.z=cur.cr+(P.pz||0);if(animal==='cat'){const q=P.sq||0;R.root.scale.set(1+q*.35,1-q,1+q*.2)}
       R.root.rotation.x=P.roll;
       R.root.position.y=(host.classList.contains('bounce')?Math.abs(Math.sin(t*9))*.12:0)+P.jy+.24*(1-Math.cos(P.roll));
       R.root.rotation.order='YXZ';{const dz=-.24*Math.sin(P.roll),yw=R.root.rotation.y;R.root.position.z=dz*Math.cos(yw);R.root.position.x=(mood==='scared'?Math.sin(t*41)*.004:0)+dz*Math.sin(yw)}

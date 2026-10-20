@@ -982,6 +982,33 @@ const GL=(()=>{
     const CATB={tabby:{fur:0xd78a42,str:true,white:0xf2e6d8,eye:0xc9b23a},siamese:{fur:0x4a3326,body:0xeadcc8,white:0xeadcc8,eye:0x4f93e0},black:{fur:0x1d1b1e,body:0x1d1b1e,white:0x1d1b1e,eye:0xc2c43a},
       grey:{fur:0x7d8590,body:0x7d8590,white:0x8d959f,eye:0xd88a26,chub:1.12},persian:{fur:0xf3efe8,body:0xf3efe8,white:0xffffff,eye:0x4a8fd8,chub:1.15},tuxedo:{fur:0x1f1d1f,body:0x1f1d1f,white:0xf4f1ec,eye:0x9ccf3a}};
     out.catBreeds=()=>Object.keys(CATB);
+    /* ---- אביזרים לחתול: כובעים, קולרים, פפיון ומשקפיים ---- */
+    const CACC=(()=>{const R=rigs.cat,H=R.head,hb=H.userData.abs,rb=R.root.userData.abs||new THREE.Vector3(),A={};
+      const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:lin(c),roughness:.5},o||{}));
+      const at=(g,p,par)=>{const b=par===H?hb:(par.userData.abs||new THREE.Vector3());g.position.set(p[0]-b.x,p[1]-b.y,p[2]-b.z);par.add(g);g.visible=false;return g};
+      // כובע מסיבה
+      {const g=new THREE.Group(),c=new THREE.Mesh(new THREE.ConeGeometry(.055,.14,24),M(0xff5fa2));c.position.y=.07;g.add(c);
+        const pom=new THREE.Mesh(new THREE.SphereGeometry(.018,12,10),M(0xfff3a0));pom.position.y=.145;g.add(pom);
+        const st=new THREE.Mesh(new THREE.TorusGeometry(.05,.008,8,24),M(0xfff3a0));st.rotation.x=Math.PI/2;st.position.y=.01;g.add(st);g.rotation.z=-.15;A.party=at(g,[.39,.735,0],H)}
+      // צילינדר
+      {const g=new THREE.Group(),m=M(0x1d1d24,{roughness:.35}),c=new THREE.Mesh(new THREE.CylinderGeometry(.045,.045,.08,24),m);c.position.y=.05;g.add(c);
+        const b=new THREE.Mesh(new THREE.CylinderGeometry(.075,.075,.008,28),m);g.add(b);const r=new THREE.Mesh(new THREE.CylinderGeometry(.046,.046,.016,24),M(0xd23a4a));r.position.y=.018;g.add(r);g.rotation.z=-.12;A.top=at(g,[.39,.738,0],H)}
+      // כתר
+      {const g=new THREE.Group(),m=M(0xf2c23a,{metalness:.6,roughness:.3}),c=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,.03,24,1,true),m);c.material.side=THREE.DoubleSide;g.add(c);
+        for(let i=0;i<6;i++){const a=i/6*6.283,sp=new THREE.Mesh(new THREE.ConeGeometry(.012,.035,8),m);sp.position.set(Math.cos(a)*.05,.03,Math.sin(a)*.05);g.add(sp)}g.rotation.z=-.12;A.crown=at(g,[.39,.74,0],H)}
+      // קולרים ופפיונים על הצוואר
+      const nd=new THREE.Vector3(.07,.1,0).normalize(),nq=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),nd);
+      [['collarR',0xd8323f],['collarB',0x2f6fe0]].forEach(([id,c])=>{const g=new THREE.Group(),t=new THREE.Mesh(new THREE.TorusGeometry(.075,.013,10,32),M(c));t.quaternion.copy(nq);g.add(t);
+        const bell=new THREE.Mesh(new THREE.SphereGeometry(.016,12,10),M(0xf2c23a,{metalness:.7,roughness:.25}));bell.position.set(.06,-.045,0);g.add(bell);A[id]=at(g,[.315,.53,0],R.body)});
+      [['bowR',0xd8323f],['bowB',0x2f6fe0]].forEach(([id,c])=>{const g=new THREE.Group(),m=M(c);[1,-1].forEach(sd=>{const k=new THREE.Mesh(new THREE.ConeGeometry(.028,.05,14),m);k.rotation.x=sd*Math.PI/2;k.position.z=sd*.024;k.scale.set(1,1,.55);g.add(k)});
+        const kn=new THREE.Mesh(new THREE.SphereGeometry(.012,10,8),m);g.add(kn);A[id]=at(g,[.37,.5,0],R.body)});
+      // משקפיים
+      [['sun',0x111318,0x111318],['heart',0xff4f8b,0xff9cc0]].forEach(([id,fr,ln])=>{const g=new THREE.Group(),fm=M(fr,{roughness:.3}),lm=M(ln,{roughness:.15,transparent:true,opacity:.85});
+        [1,-1].forEach(sd=>{const r=new THREE.Mesh(new THREE.TorusGeometry(.024,.004,8,24),fm);r.rotation.y=Math.PI/2;r.position.z=sd*.052;g.add(r);const l=new THREE.Mesh(new THREE.CircleGeometry(.022,20),lm);l.rotation.y=Math.PI/2;l.position.set(.001,0,sd*.052);g.add(l)});
+        const br=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,.05,6),fm);br.rotation.x=Math.PI/2;g.add(br);g.scale.setScalar(1.3);A[id]=at(g,[.556,.672,0],H)});
+      return A})();
+    out.catItems=()=>Object.keys(CACC);
+    out.dressCat=w=>{w=w||{};const on=new Set([w.hat,w.neck,w.face].filter(Boolean));for(const k in CACC)CACC[k].visible=on.has(k)};
     out.setCatBreed=id=>{const b=CATB[id]||CATB.tabby,R=rigs.cat;R.furM.color.copy(lin(b.fur));R.skinM.color.copy(lin(b.fur)).multiplyScalar(.78);R.whiteM.color.copy(lin(b.white));
       if(b.str){R.stripeM.map=R.stripeTex;R.stripeM.color.setRGB(1,1,1)}else{R.stripeM.map=null;R.stripeM.color.copy(lin(b.body))}R.stripeM.needsUpdate=true;
       R.eyes.forEach(e=>{const m=e.children[0]&&e.children[0].material;if(m)m.color.copy(lin(b.eye))});const k=b.chub||1;R.body.scale.set(1,k,k)};
@@ -1356,7 +1383,7 @@ const GL=(()=>{
       scared:{hz:-.26,ez:-.72,ex:.05,tb:2.0,wa:.04,ws:22,ey:1.22,es:1.18,jaw:0,tg:0,cr:.1}};
     const cur={};Object.keys(T.happy).forEach(k=>cur[k]=T.happy[k]);
     /* ---------- טריקים: תנוחות ואנימציה בפריימים ---------- */
-    const STAND={fo:0,ty:0,tr:0,fn:0,ff:0,rn:0,rf:0,hp:0,ht:0,spin:0,roll:0,jy:0,tg:0,eye:1};
+    const STAND={fo:0,ty:0,tr:0,fn:0,ff:0,rn:0,rf:0,hp:0,ht:0,spin:0,roll:0,jy:0,tg:0,eye:1,pz:0,sq:0};
     const SIT={ty:-.3,tr:.5,fn:0,ff:0,rn:1.35,rf:1.35,hp:-.32};
     const DOWN={ty:-.31,tr:0,fn:1.45,ff:1.45,rn:1.45,rf:1.45,hp:.05};
     const K=(...seg)=>seg; // [משך במילישניות, תנוחה חלקית]
@@ -1385,7 +1412,18 @@ const GL=(()=>{
       segs.forEach(([d,pose])=>{const to={...from,...pose};frames.push({t0:t,t1:t+d,from,to});from=to;t+=d});
       anim={frames,start:performance.now(),total:t};return t;
     }
-    out.play=name=>{if(animal!=='dog'||!TR[name])return 600;Object.assign(P,{spin:P.spin%6.283,roll:P.roll%6.283});return startAnim(TR[name])};
+    /* ---- טריקים לחתול: הגוף כולו נוטה (pz), מתכווץ (sq), קופץ ומסתובב ---- */
+    const CSIT={pz:.32,hp:-.18},CDOWN={sq:.28,hp:-.06};
+    const CTR={sit:K([600,CSIT]),down:K([550,CDOWN]),paw:K([500,CSIT],[450,{pz:.48,ht:.22}],[350,{pz:.4}]),hi5:K([500,CSIT],[450,{pz:.55,ht:.18,hp:.05}]),
+      spin:K([1300,{spin:6.283}]),touch:K([330,{hp:-.32}],[250,{hp:-.08}],[250,{hp:-.32}]),bow:K([600,{pz:-.26,hp:.22,sq:.08}]),
+      roll:K([500,CDOWN],[1100,{roll:6.283}]),bang:K([450,CDOWN],[550,{roll:1.571,eye:.08,tg:1}]),
+      jump:K([260,{sq:.16}],[330,{jy:.45,sq:-.08}],[330,{jy:0,sq:0}]),
+      dance:K([260,{jy:.11,pz:.12,hp:.2}],[260,{jy:0,pz:-.08,hp:-.2}],[260,{jy:.11,pz:.12,hp:.2}],[260,{jy:0,pz:-.08,hp:-.2}],[420,{jy:.14,pz:0,hp:0,spin:6.283}],[300,{jy:0,spin:6.283}]),
+      beg:K([600,CSIT],[500,{pz:.62,hp:.15}],[300,{pz:.55}],[300,{pz:.62}]),
+      shake:K([110,{pz:.06,spin:.4}],[110,{pz:-.06,spin:-.4}],[110,{pz:.06,spin:.4}],[110,{pz:-.06,spin:-.4}],[200,{pz:0,spin:0}]),
+      howl:K([500,CSIT],[900,{hp:.45,tg:1}],[700,{hp:.45,tg:1}],[400,CSIT]),
+      sleep:K([700,{...CDOWN,eye:.08,ht:.25}]),confused:K([400,{ht:.38,hp:.08}],[500,{ht:-.3}],[400,{ht:.3}])};
+    out.play=name=>{const T2=animal==='cat'?CTR:TR;if(!T2[name])return 600;Object.assign(P,{spin:P.spin%6.283,roll:P.roll%6.283});return startAnim(T2[name])};
     out.stand=()=>{P.spin%=6.283;P.roll%=6.283;if(P.roll>3.14)P.roll-=6.283;return startAnim([[650,STAND]])};
     out.eat=()=>{eatUntil=performance.now()+1300};
     out.mouth=()=>{const R=rigs[animal];if(!host)return null;R.root.updateMatrixWorld(true);
@@ -1433,7 +1471,7 @@ const GL=(()=>{
       if(anim){const e=now-anim.start;for(const f of anim.frames){if(e>=f.t0&&e<f.t1||f===anim.frames[anim.frames.length-1]){const k=ease(Math.min(1,Math.max(0,(e-f.t0)/(f.t1-f.t0))));for(const key in f.to)P[key]=f.from[key]+(f.to[key]-f.from[key])*k;if(e<f.t1)break}}if(e>anim.total)anim=null}
       const eating=now<eatUntil;
       R.root.rotation.y=-.82+Math.sin(t*.45)*.14*(anim?0.3:1)+P.spin+VW.yaw;
-      R.root.rotation.z=cur.cr;
+      R.root.rotation.z=cur.cr+(P.pz||0);if(animal==='cat'){const q=P.sq||0;R.root.scale.set(1+q*.35,1-q,1+q*.2)}
       R.root.rotation.x=P.roll;
       R.root.position.y=(host.classList.contains('bounce')?Math.abs(Math.sin(t*9))*.12:0)+P.jy+.24*(1-Math.cos(P.roll));
       R.root.rotation.order='YXZ';{const dz=-.24*Math.sin(P.roll),yw=R.root.rotation.y;R.root.position.z=dz*Math.cos(yw);R.root.position.x=(mood==='scared'?Math.sin(t*41)*.004:0)+dz*Math.sin(yw)}
@@ -1504,7 +1542,7 @@ function pron(text){const P=Object.assign({},PRON,S.pron||{});
   return String(text).replace(NKR,w=>{const b=nkStrip(w);if(P[b])return P[b];return S.nkSp?(NKM.test(w)?w:(NK[w]||w)):b})}
 const NKSKIP=/^(SCRIPT|STYLE|TEXTAREA|INPUT)$/,HEBRE=new RegExp('['+HL+']');
 function nkNode(root){if(S.lang!=='he'||!root)return;
-  if(root.nodeType===3){if(root.parentNode&&!NKSKIP.test(root.parentNode.nodeName)&&HEBRE.test(root.nodeValue)){let v=gnd(root.nodeValue);if(NKON())v=gndNk(nk(v));if(v!==root.nodeValue)root.nodeValue=v}return}
+  if(root.nodeType===3){if(root.parentNode&&!NKSKIP.test(root.parentNode.nodeName)&&HEBRE.test(root.nodeValue)){NOCAT=!!(root.parentNode.closest&&root.parentNode.closest('[data-nocat]'));let v=catW(gnd(root.nodeValue));NOCAT=false;if(NKON())v=gndNk(nk(v));if(v!==root.nodeValue)root.nodeValue=v}return}
   if(root.nodeType!==1||NKSKIP.test(root.nodeName))return;
   const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT),ns=[];while(w.nextNode())ns.push(w.currentNode);
   ns.forEach(n=>nkNode(n))}
@@ -1514,11 +1552,11 @@ let TRRE=null;
 function trBuild(){const ks=Object.keys(EN).sort((a,b)=>b.length-a.length),R=s=>s.replace(/[.*+?^${}()|[\]\\\/]/g,'\\$&');
   TRRE=new RegExp(ks.map(k=>{const e=R(k).replace(/ /g,'\\s+'),HB=/[א-ת]/,last=k.split(' ').pop();return (HB.test(k[0])?'(?<![א-ת])':'')+e+(HB.test(k[k.length-1])&&(k.length<=3||last.length>2)?'(?![א-ת])':'')}).join('|'),'g')}
 function tr(s){s=String(s);if(S.lang!=='en'||!HEBRE.test(s))return s;if(!TRRE)trBuild();
-  s=nkStrip(s);return s.replace(TRRE,(m,...r)=>{let v=EN[m.replace(/\s+/g,' ')];if(v==null)return m;const o=r[r.length-2],str=r[r.length-1],nx=str[o+m.length]||'',pv=str[o-1]||'';
-    if(nx&&/\S/.test(nx)&&!/[.,!?:;)\]"'״׳…]/.test(nx)&&/[\w)]$/.test(v))v+=' ';if(/[\w\u05d0-\u05ea]/.test(pv)&&/^\w/.test(v))v=' '+v;return v})}
+  s=nkStrip(s);return catW(s.replace(TRRE,(m,...r)=>{let v=EN[m.replace(/\s+/g,' ')];if(v==null)return m;const o=r[r.length-2],str=r[r.length-1],nx=str[o+m.length]||'',pv=str[o-1]||'';
+    if(nx&&/\S/.test(nx)&&!/[.,!?:;)\]"'״׳…]/.test(nx)&&/[\w)]$/.test(v))v+=' ';if(/[\w\u05d0-\u05ea]/.test(pv)&&/^\w/.test(v))v=' '+v;return v}))}
 const TRATTR=['placeholder','aria-label','title','alt'];
 function trNode(root){if(S.lang!=='en'||!root)return;
-  if(root.nodeType===3){const p=root.parentNode;if(p&&!NKSKIP.test(p.nodeName)&&!(p.closest&&p.closest('[data-notr]'))&&HEBRE.test(root.nodeValue)){const v=tr(root.nodeValue);if(v!==root.nodeValue)root.nodeValue=v}return}
+  if(root.nodeType===3){const p=root.parentNode;if(p&&!NKSKIP.test(p.nodeName)&&!(p.closest&&p.closest('[data-notr]'))&&HEBRE.test(root.nodeValue)){NOCAT=!!(p.closest&&p.closest('[data-nocat]'));const v=tr(root.nodeValue);NOCAT=false;if(v!==root.nodeValue)root.nodeValue=v}return}
   if(root.nodeType!==1||NKSKIP.test(root.nodeName))return;
   if(root.closest&&root.closest('[data-notr]'))return;
   const els=[root].concat([...root.querySelectorAll('*')]);
@@ -1550,6 +1588,7 @@ function click(){const c=audio();if(!c||!S.sound)return;unlock();const t=c.curre
 function chime(){const c=audio();if(!c||!S.sound)return;unlock();[660,880,1320].forEach((f,i)=>{const t=c.currentTime+i*.12,o=c.createOscillator(),g=c.createGain();
   o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.2,t);g.gain.exponentialRampToValueAtTime(.001,t+.3);o.connect(g);g.connect(c.destination);o.start(t);o.stop(t+.32)})}
 function playSamples(x,sr){const c=audio();if(!c)return;unlock();const b=c.createBuffer(1,x.length,sr),s=c.createBufferSource();b.copyToChannel(x,0);s.buffer=b;s.connect(c.destination);s.start()}
+function NTTS(){const C=window.Capacitor;return C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins&&C.Plugins.TextToSpeech?C.Plugins.TextToSpeech:null}
 function hebVoice(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];return v.find(x=>/^he/i.test(x.lang))||null}
 function enVoice(){const v=window.speechSynthesis?speechSynthesis.getVoices():[];return v.find(x=>/^en[-_]US/i.test(x.lang))||v.find(x=>/^en/i.test(x.lang))||null}
 const curVoice=()=>S.lang==='en'?enVoice():hebVoice();
@@ -1579,12 +1618,13 @@ document.addEventListener('pointerdown',unlockSpeech,{passive:true});
 const clean=t=>String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}\u{2190}-\u{21FF}]/gu,' ').replace(/\s+/g,' ').trim();
 let voiceOK=null;
 function speak(text,kind,narrator){
-  text=clean(tr(gnd(text)));if(!text)return;
+  text=clean(catW(tr(gnd(text))));if(!text)return;
   const dog=!narrator&&S.puppy;
   const av=$('.avatar');const dur=Math.min(7000,800+text.length*75);
   if(av&&!narrator){av.classList.add('talk');clearTimeout(speak.t);speak.t=setTimeout(()=>av.classList.remove('talk'),dur)}
   if(!S.sound)return;
   if(dog)bark(kind||'yip');
+  {const nt=NTTS();if(nt){try{nt.stop().catch(()=>{});nt.speak({text:gndNk(pron(text)),lang:S.lang==='en'?'en-US':'he-IL',rate:dog?(lia()?.95:1.05):(lia()?.85:.95),pitch:dog?1.5:1,volume:1,category:'ambient'}).then(()=>{if(!narrator){clearTimeout(speak.t);const a=$('.avatar');if(a)a.classList.remove('talk')}}).catch(()=>{})}catch(e){}return}}
   if(!window.speechSynthesis)return;
   try{
     if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
@@ -1630,7 +1670,7 @@ function mouth(m){
   return `<g class="mc">${c}</g>${o}`;
 }
 function avatar(animal,mood){
-  mood=mood||'happy';
+  mood=mood||'happy';if(animal==='dog'&&petCat()&&S.screen!=='learn')animal='cat';
   const dog=animal==='dog';
   const body=dog?`
     <circle cx="44" cy="104" r="30" fill="var(--furd)"/><circle cx="34" cy="128" r="22" fill="var(--furd)"/><circle cx="156" cy="104" r="30" fill="var(--furd)"/><circle cx="166" cy="128" r="22" fill="var(--furd)"/>
@@ -1810,10 +1850,10 @@ function analyzeAndShow(x,sr,tag){
 
 /* ---------- מסכים ---------- */
 const V={};
-function greet(){const n=S.who?lowNeed(pet()):null,b='היי '+UNAME()+'! אני '+DN()+'.';return n?b+' '+LOWMSG[n.k]:b+(lia()?' בואו נשחק!':' מה נעשה היום?')}
+function greet(){const n=S.who?lowNeed(pet()):null,b='היי '+UNAME()+'! אני '+DN()+'.';return n?b+' '+LM(n.k):b+(lia()?' בואו נשחק!':' מה נעשה היום?')}
 const app=$('#app');
-function render(){document.body.dataset.who=S.who||'';{const u=U(),bs=document.body.style;if(u){bs.setProperty('--accent',u.color);bs.setProperty('--accent-ink','#fff')}else{bs.removeProperty('--accent');bs.removeProperty('--accent-ink')}}if(GL.ok&&GL.setBreed)GL.setBreed((S.who&&D().breed)||'poodle');document.body.classList.toggle('nk',NKON());applyLang();setFur();app.innerHTML=(V[S.screen]||V.login)();trNode(app);window.scrollTo(0,0);if(GL.ok){GL.mount();if(S.who)GL.dress(pet().wear);afterMount();if(S.screen==='dress'){const av=$('.avatar');if(av)av.classList.add('dressable')}}if(typeof needBubble==='function')needBubble()}
-function go(s){if(s==='safety')S.quiz={lv:null,i:0,ok:0,ans:null};if(typeof cClear==='function')cClear();if(GL.ok&&GL.resetView&&s!==S.screen)GL.resetView();if(typeof gClear==='function'){gClear();G.phase='idle'}if(S.timer.h&&s!=='train'){clearInterval(S.timer.h);S.timer.run=false;S.timer.h=null}S.screen=s;S.res=null;render()}
+function render(){document.body.dataset.who=S.who||'';{const u=U(),bs=document.body.style;if(u){bs.setProperty('--accent',u.color);bs.setProperty('--accent-ink','#fff')}else{bs.removeProperty('--accent');bs.removeProperty('--accent-ink')}}if(GL.ok&&GL.setBreed)GL.setBreed((S.who&&D().breed)||'poodle');document.body.classList.toggle('nk',NKON());applyLang();setFur();app.innerHTML=(V[S.screen]||V.login)();trNode(app);window.scrollTo(0,0);if(GL.ok){GL.mount();if(S.who)GL.dress(pet().wear);if(GL.dressCat)GL.dressCat(S.who&&petCat()?pet().wear:{});afterMount();if(S.screen==='dress'){const av=$('.avatar');if(av)av.classList.add('dressable')}}if(typeof needBubble==='function')needBubble()}
+function go(s){if(s==='translate'&&U())S.animal=U().animal==='cat'?'cat':'dog';if(s!=='story')S.stI=null;if(s==='safety')S.quiz={lv:null,i:0,ok:0,ans:null};if(typeof cClear==='function')cClear();if(GL.ok&&GL.resetView&&s!==S.screen)GL.resetView();if(typeof gClear==='function'){gClear();G.phase='idle'}if(S.timer.h&&s!=='train'){clearInterval(S.timer.h);S.timer.run=false;S.timer.h=null}S.screen=s;S.res=null;render()}
 function header(title){return `<div class="top"><button class="back" data-act="home" aria-label="חזרה">→ חזרה</button><div class="who"><span>${esc(title||'')}</span><span class="dot">${esc(INI(U()))}</span></div></div>`}
 
 const langSeg=()=>`<div class="seg lang" role="group" aria-label="Language / שפה" data-notr="1"><button data-act="lang" data-v="he" aria-pressed="${S.lang==='he'}">עברית</button><button data-act="lang" data-v="en" aria-pressed="${S.lang==='en'}">English</button></div>`;
@@ -1842,7 +1882,8 @@ V.home=()=>{
   <button class="btn sun big" data-act="go" data-s="game">🎮 משחק: מאלפים את ${esc(DN())}</button>
   <div class="grid2"><button class="btn" data-act="go" data-s="mem">🧩 משחק זיכרון</button><button class="btn" data-act="go" data-s="course">🚧 מסלול מכשולים</button>
    <button class="btn" data-act="go" data-s="learn">📚 כרטיסיות לימוד</button><button class="btn" data-act="go" data-s="color">🖍️ מצב צביעה</button>
-   <button class="btn" data-act="go" data-s="album">🖼️ האלבום שלי</button><button class="btn" data-act="go" data-s="real">🐶 הכלב שלנו</button></div>
+   <button class="btn" data-act="go" data-s="album">🖼️ האלבום שלי</button><button class="btn" data-act="go" data-s="real" data-nocat="1">🐶 הכלב שלנו</button>
+   <button class="btn" data-act="go" data-s="story">📖 הסיפור של היום</button></div>
   ${dailyCard()}
   <label class="btn ghost" for="photo">📷 הכלב שלי: צבע פרווה מתמונה</label>
   <input class="file" id="photo" type="file" accept="image/*" aria-label="בחירת תמונה של הכלב">`;
@@ -1909,6 +1950,7 @@ V.train=()=>{
   return `${header('אילוף')}
   <div class="avatarWrap">${avatar('dog','happy')}<div class="bubble ${lia()?'lia':''}">${lia()?'מאלפים רק עם מבוגר לידך!':'מאלפים עם חטיפים וסבלנות. מבוגר תמיד בסביבה.'}</div></div>
   <button class="btn sun big" data-act="go" data-s="game">🎮 מתאמנים על ${esc(DN())} במשחק</button>
+  ${petCat()?'<div class="note">🐈 רוב הטריקים עובדים גם עם חתולים, עם קליקר וחטיף. חתולים מתאמנים בקצרה, שתיים-שלוש דקות בכל פעם, ומפסיקים כשהם הולכים.</div>':''}
   <div class="card"><h3>חוקי הזהב</h3><ul class="rules">${GOLD.slice(0,lia()?3:5).map(g=>`<li><span style="font-size:1.6rem">${g[0]}</span>${g[1]}</li>`).join('')}</ul></div>
   <h2>${lia()?'בחרי טריק':'בנק הטריקים'}</h2>
   ${lia()?'':`<p class="muted">${TRICKS.length} טריקים ב-3 רמות. ${esc(DN())} כבר יודע ${done}.</p>`}
@@ -1983,7 +2025,7 @@ V.parent=()=>{
     return `<div class="top"><button class="back" data-act="login">→ חזרה</button><div class="who">להורים</div></div>
     <div class="card"><h2>שאלה קצרה למבוגרים</h2><p>כמה זה ${g.a} + ${g.b}?</p><div class="grid2">${g.o.map(v=>`<button class="btn ghost" data-act="gate" data-v="${v}">${v}</button>`).join('')}</div></div>`;
   }
-  const hv=!!curVoice();
+  const hv=!!curVoice()||!!NTTS();
   const du=S.delId&&S.users.find(u=>u.id===S.delId);
   return `<div class="top"><button class="back" data-act="login">→ יציאה</button><div class="who">פינת ההורים</div></div>
   <div class="card" id="users"><h3>👥 משתמשים</h3>
@@ -2153,10 +2195,10 @@ function gButtons(){const on=G.phase==='window';
   document.querySelectorAll('.gsign').forEach(b=>b.disabled=G.phase!=='idle');
   const n=$('#gNo');if(n)n.hidden=lia()||!on;
   const tr=$('#gTreat');if(tr)tr.classList.toggle('ready',on)}
-V.game=()=>{const d=D();const list=GSIGNS.filter(s=>!lia()||GLIA.includes(s.id));
+V.game=()=>{const d=D();const list=GSIGNS.filter(s=>(!lia()||GLIA.includes(s.id))&&(!petCat()||!['bang','howl'].includes(s.id)));
  return `${header(lia()?'משחק אילוף':'משחק: מאלפים את '+esc(DN()))}
  <div class="stage" id="stage">${avatar('dog','happy')}<div class="ghand" id="gHand" aria-hidden="true"></div><div class="gtimer" id="gTimer" hidden><i></i></div><div class="gstars" id="gStars" aria-live="polite"></div></div>
- <div class="bubble ${lia()?'lia':''}" id="gMsg">${lia()?'בחרי סימן, ואחרי ש'+esc(DN())+' עושה אותו, תני לו חטיף!':'בחרו סימן. כש'+esc(DN())+' מבצע: קליק, ואז גוררים חטיף לפה. יש לכם 2 שניות!'}</div>
+ <div class="bubble ${lia()?'lia':''}" id="gMsg">${lia()?'בחרי סימן, ואחרי ש'+esc(DN())+' עושה אותו, תני לו חטיף!':'בחרו סימן. כש'+esc(DN())+' מבצע: קליק, ואז גוררים חטיף לפה. יש לכם '+(GW()>1?3:2)+' שניות!'}</div>
  <div class="gtray">
    <button class="clicker small" data-act="gClick" aria-label="קליק">קליק</button>
    <div class="treat" id="gTreat" role="button" tabindex="0" aria-label="חטיף. גוררים אל הכלב או לוחצים">🍖</div>
@@ -2178,8 +2220,8 @@ function gStart(id){
   gLater(1000,()=>{G.phase='doing';const ms=GL.ok?GL.play(G.did):500;
     gLater(ms,()=>{G.phase='window';G.winAt=performance.now();gButtons();
       gSay(lia()?'עכשיו! תני לו חטיף 🍖':'עכשיו! קליק וחטיף');
-      if(!lia()){const t=$('#gTimer');if(t){t.hidden=false;const i=t.firstElementChild;i.style.transition='none';i.style.width='100%';void i.offsetWidth;i.style.transition='width 2s linear';i.style.width='0%'}
-        gLater(4000,gTimeout)}})})}
+      if(!lia()){const t=$('#gTimer');if(t){t.hidden=false;const i=t.firstElementChild;i.style.transition='none';i.style.width='100%';void i.offsetWidth;i.style.transition='width '+(2*GW())+'s linear';i.style.width='0%'}
+        gLater(4000*GW(),gTimeout)}})})}
 function gEnd(msg,stars,cls){
   G.phase='feedback';gButtons();const t=$('#gTimer');if(t)t.hidden=true;
   gSay(msg,cls);
@@ -2207,9 +2249,9 @@ function gFeed(){if(G.phase!=='window'&&!(lia()&&G.phase==='window'))return;
   if(lia()){d.k[k]=Math.min(5,(d.k[k]||0)+1);gEnd('כל הכבוד '+UNAME()+'! '+name+' אוהב את החטיף!',1);gLater(500,()=>speak('יאמי! תודה '+UNAME()+'!','yip'));return}
   if(!G.correct){d.k[k]=Math.max(0,(d.k[k]||0)-1);save();gEnd('אופס! '+name+' לא עשה '+G.sign.n+'. כשנותנים חטיף על טעות, הכלב לומד את הטעות.',0,'warnb');return}
   const cDt=G.clickAt?G.clickAt-G.winAt:null,tDt=now-(G.clickAt||G.winAt);let stars=0,msg;
-  if(cDt!==null&&cDt<=2000){stars=1;if(tDt<=2000)stars++;if(cDt<=1000&&tDt<=1500)stars++;
+  if(cDt!==null&&cDt<=2000*GW()){stars=1;if(tDt<=2000*GW())stars++;if(cDt<=1000*GW()&&tDt<=1500*GW())stars++;
     msg=stars===3?'מושלם! קליק מהיר וחטיף בזמן.':stars===2?'יפה מאוד! קליק בזמן וחטיף בזמן.':'הקליק היה בזמן, אבל החטיף הגיע לאט. מהר יותר בפעם הבאה!'}
-  else if(cDt===null&&now-G.winAt<=2000){stars=1;msg='חטיף בזמן! בפעם הבאה גם קליק, כדי ש'+name+' ידע בדיוק על מה החטיף.'}
+  else if(cDt===null&&now-G.winAt<=2000*GW()){stars=1;msg='חטיף בזמן! בפעם הבאה גם קליק, כדי ש'+name+' ידע בדיוק על מה החטיף.'}
   else msg='החטיף הגיע מאוחר מדי. כלבים מחברים בין מעשה לפרס רק בשנייה או שתיים.';
   if(stars>=2)d.k[k]=Math.min(5,(d.k[k]||0)+1);save();gEnd(msg,stars,stars?'':'warnb')}
 A.gSign=b=>gStart(b.dataset.id);A.gClick=gClickBtn;A.gNo=gNo;
@@ -2248,7 +2290,7 @@ const wallet=()=>D().game.stars-pet().spent;
 function cLater(ms,f){CB.tm.push(setTimeout(f,ms))}
 function cClear(){CB.tm.forEach(clearTimeout);CB.tm=[];CB.busy=false;CB.brush=null;if(GL.ok&&GL.walk)GL.walk(false)}
 function cSay(t,kind){const b=$('#cMsg');if(b)b.textContent=t;speak(t,kind||'yip')}
-function cFact(k){const f=$('#cFact');if(f)f.textContent='💡 '+FACTS[k]}
+function cFact(k){const f=$('#cFact');if(f)f.textContent='💡 '+((petCat()&&FACTS_CAT[k])||FACTS[k])}
 function cRefresh(){const p=pet();document.querySelectorAll('.need').forEach(b=>{const v=p[b.dataset.k];b.querySelectorAll('.hr i').forEach((i,j)=>i.classList.toggle('on',j<hearts(v)))});
   const w=$('#cWal');if(w)w.textContent='⭐ '+wallet()+' כוכבים';if(GL.ok)GL.setMood(lowNeed(p)?'sad':'happy')}
 function cDone(){const p=pet(),today=new Date().toDateString();
@@ -2261,15 +2303,15 @@ function spark(x,y){const s=document.createElement('div');s.className='spark';s.
 
 V.care=()=>{
   const p=pet(),low=lowNeed(p),dn=esc(DN());
-  const msg=low?LOWMSG[low.k]:(lia()?'אני מרגיש מצוין! תודה '+UNAME()+'!':'אני מרגיש מצוין. תודה שאת דואגת לי!');
+  const msg=low?LM(low.k):(lia()?'אני מרגיש מצוין! תודה '+UNAME()+'!':'אני מרגיש מצוין. תודה שאת דואגת לי!');
   const strip='🌳 🌷 🏡 🌳 🌼 🌲 ⛲ 🌷 '.repeat(2);
   return `${header('לטפל ב'+DN())}
   <div class="stage care" id="cstage"><div class="bgwalk" aria-hidden="true"><div class="track"><span>${strip}</span><span>${strip}</span></div></div>
    <div class="night" aria-hidden="true"><span class="moon">🌙</span></div>${avatar('dog',low?'sad':'happy')}<div class="zzz" aria-hidden="true">💤</div></div>
   <div class="bubble ${lia()?'lia':''}" id="cMsg">${msg}</div>
   <div class="meter" id="bprog" hidden><i></i></div>
-  <div class="needs">${NEEDS.map(n=>`<button class="need" data-act="care" data-k="${n.k}" aria-label="${n.n}"><span class="ic">${n.ic}</span><span class="hr" aria-hidden="true">${[0,1,2,3,4].map(i=>`<i class="${i<hearts(p[n.k])?'on':''}"></i>`).join('')}</span><span class="nm">${n.n}</span></button>`).join('')}</div>
-  <div class="toyrow"><div class="toy" id="toy" role="button" tabindex="0" aria-label="זורקים כדור">🎾</div><p class="muted">${lia()?'מחליקים את הכדור למעלה וזורקים!':'מחליקים את הכדור למעלה כדי לזרוק. החלקה ארוכה זורקת רחוק יותר.'}</p></div>
+  <div class="needs">${NEEDS.map(NI).map(n=>`<button class="need" data-act="care" data-k="${n.k}" aria-label="${n.n}"><span class="ic">${n.ic}</span><span class="hr" aria-hidden="true">${[0,1,2,3,4].map(i=>`<i class="${i<hearts(p[n.k])?'on':''}"></i>`).join('')}</span><span class="nm">${n.n}</span></button>`).join('')}</div>
+  <div class="toyrow"><div class="toy" id="toy" role="button" tabindex="0" aria-label="זורקים כדור">${petCat()?'🧶':'🎾'}</div><p class="muted">${lia()?'מחליקים את הכדור למעלה וזורקים!':'מחליקים את הכדור למעלה כדי לזרוק. החלקה ארוכה זורקת רחוק יותר.'}</p></div>
   ${lia()?'':`<div class="note" id="cFact">💡 כל פעולה מלמדת משהו על טיפול אמיתי בכלב. לוחצים ובודקים.</div>`}
   <div class="row" style="justify-content:space-between"><span class="tag" id="cWal">⭐ ${wallet()} כוכבים</span><button class="btn sun" data-act="go" data-s="dress">👕 ארון הבגדים</button></div>
   ${lia()?'':`<p class="muted">יום מושלם: כשכל הלבבות כמעט מלאים (ארבעה מתוך חמישה), מקבלים כוכב אחד פעם ביום. הכוכבים משמשים לקניית בגדים.</p>`}`};
@@ -2290,6 +2332,10 @@ A.care=e=>{unlock();const k=e.dataset.k,p=pet();
     if(CB.brush){CB.brush=null;const a=$('.avatar');if(a)a.classList.remove('brushing');$('#bprog').hidden=true;return}
     CB.brush={acc:0,down:false};const a=$('.avatar');if(a)a.classList.add('brushing');const b=$('#bprog');b.hidden=false;b.firstElementChild.style.width='0%';
     face(lia()?'מברשים! מחליקים את האצבע על '+DN()+'.':'בואו נברש! מחליקים את האצבע על '+DN()+' כמה פעמים.');return}
+  if(k==='fun'&&petCat()){cFact(k);
+    if(p.fun>=90){face('כבר שיחקנו בנוצה. עכשיו אני רגוע.');return}
+    CB.busy=true;face('צדים את הנוצה! קפיצה!');const ms=GL.ok?GL.play('jump'):800;cLater(ms+200,()=>{if(GL.ok)GL.play('spin')});
+    cLater(3200,()=>{if(GL.ok)GL.stand();p.fun=Math.min(100,p.fun+55);p.rest=Math.max(15,p.rest-8);save();cRefresh();cSay('תפסתי! איזה כיף!');CB.busy=false;cLater(1200,cDone)});return}
   if(k==='fun'){
     cFact(k);
     if(p.fun>=90){face('כבר טיילנו היום. עכשיו אני רגוע.');return}
@@ -2301,7 +2347,7 @@ A.care=e=>{unlock();const k=e.dataset.k,p=pet();
   if(k==='rest'){
     cFact(k);
     if(p.rest>=90){face('אני לא עייף עכשיו. בא לי לשחק!');return}
-    CB.busy=true;face('לילה טוב... ששש, פודי ישן.','whine');
+    CB.busy=true;face('לילה טוב... ששש, '+DN()+' ישן.','whine');
     if(st)st.classList.add('sleeping');if(GL.ok){GL.play('sleep');GL.setMood('calm')}
     cLater(5500,()=>{if(st)st.classList.remove('sleeping');if(GL.ok){GL.stand();GL.setMood('happy')}p.rest=Math.min(100,p.rest+60);save();cRefresh();
       cSay('בוקר טוב! נחתי מצוין.');CB.busy=false;cLater(1200,cDone)});return}
@@ -2310,19 +2356,19 @@ A.care=e=>{unlock();const k=e.dataset.k,p=pet();
 function cThrow(pw){if(S.screen!=='care')return;unlock();if(CB.brush)return;if(CB.busy)return;const p=pet();cFact('play');
   if(p.play>=92){cSay('שיחקנו הרבה. אני צריך הפסקה קטנה!');return}
   CB.busy=true;cSay(pw>1.1?'וואו, רחוק! אני רץ!':'יש! אני רץ להביא!');const t=$('#toy');if(t)t.classList.add('gone');
-  let d=GL.ok&&GL.fetch?GL.fetch(pw):0;if(!d)d=1200;
+  let d=petCat()?(GL.ok?GL.play('dance')+200:1200):(GL.ok&&GL.fetch?GL.fetch(pw):0);if(!d)d=1200;
   cLater(d,()=>{p.play=Math.min(100,p.play+45);p.fun=Math.min(100,p.fun+8);p.water=Math.max(15,p.water-6);save();cRefresh();const tt=$('#toy');if(tt)tt.classList.remove('gone');
-    cSay(lia()?'הבאתי! עוד פעם?':'הבאתי את הכדור! עוד פעם?');CB.busy=false;cLater(1200,cDone)})}
+    if(GL.ok&&petCat())GL.stand();cSay(petCat()?'תפסתי את הצמר! עוד פעם?':lia()?'הבאתי! עוד פעם?':'הבאתי את הכדור! עוד פעם?');CB.busy=false;cLater(1200,cDone)})}
 document.addEventListener('pointerdown',e=>{const t=e.target.closest('#toy');if(!t)return;e.preventDefault();const sx=e.clientX,sy=e.clientY,t0=performance.now();t.classList.add('hold');
   const mv=ev=>{t.style.transform='translate('+((ev.clientX-sx)*.5)+'px,'+(Math.min(0,ev.clientY-sy)*.6)+'px)'};
   const up=ev=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up);removeEventListener('pointercancel',up);t.classList.remove('hold');t.style.transform='';
     const dy=sy-ev.clientY,dt=Math.max(60,performance.now()-t0);if(dy>25)cThrow(Math.max(.55,Math.min(1.35,dy/220+120/dt*.3)));else cThrow(1)};
   addEventListener('pointermove',mv);addEventListener('pointerup',up);addEventListener('pointercancel',up)});
 document.addEventListener('keydown',e=>{if(e.target.id==='toy'&&(e.key==='Enter'||e.key===' ')){e.preventDefault();cThrow(1)}});
-function needBubble(){const av=$('.avatar');if(!av||!S.who||S.screen==='care'||av.dataset.animal==='cat')return;const p=pet();let m=null;
+function needBubble(){const av=$('.avatar');if(!av||!S.who||S.screen==='care'||(av.dataset.animal==='cat'&&!petCat()))return;const p=pet();let m=null;
   NEEDS.forEach(n=>{if(p[n.k]<35&&(!m||p[n.k]<p[m.k]))m=n});if(!m)return;
-  const b=document.createElement('button');b.className='nb';b.dataset.act='needgo';b.dataset.k=m.k;b.setAttribute('aria-label',LOWMSG[m.k]);b.innerHTML='<span>'+m.ic+'</span>';av.appendChild(b)}
-A.needgo=e=>{speak(LOWMSG[e.dataset.k],'whine');setTimeout(()=>go('care'),60)};
+  const b=document.createElement('button');b.className='nb';b.dataset.act='needgo';b.dataset.k=m.k;b.setAttribute('aria-label',LM(m.k));b.innerHTML='<span>'+m.ic+'</span>';av.appendChild(b)}
+A.needgo=e=>{speak(LM(e.dataset.k),'whine');setTimeout(()=>go('care'),60)};
 
 /* מברשת: מחליקים אצבע על הכלב */
 document.addEventListener('pointerdown',e=>{const b=CB.brush;if(!b||!e.target.closest('.avatar'))return;b.down=true;b.lx=e.clientX;b.ly=e.clientY;b.sp=0});
@@ -2368,17 +2414,17 @@ const ITEMS=[
  {id:'dino',slot:'costume',n:'תחפושת דינוזאור',e:'🦖',c:'#c9f0d0',p:6},
  {id:'bflyc',slot:'costume',n:'תחפושת פרפר',e:'🦋',c:'#e6d6ff',p:8}];
 V.dress=()=>{
-  const p=pet(),sl=S.dressTab||'hat';
+  const p=pet();let sl=S.dressTab||'hat';if(petCat()&&!['hat','neck','face','fur'].includes(sl))sl='hat';
   const worn=Object.values(p.wear).map(id=>{const i=ITEMS.find(x=>x.id===id);return i?i.e:''}).join(' ');
   return `${header('ארון הבגדים')}
   <div class="avatarWrap">${avatar('dog','happy')}${GL.ok?`<div class="row" style="justify-content:space-between;width:100%"><span class="muted">${lia()?'אצבע אחת מסובבת. שתיים מקרבות.':'👆 אצבע אחת מסובבת ומטה · ✌️ שתי אצבעות מקרבות ומזיזות · הקשה כפולה מאפסת'}</span><button class="back" data-act="vreset">↺ איפוס</button></div>`:`<p class="muted" style="text-align:center">לובש: ${worn||'כלום'}</p>`}</div>
   <div class="row" style="justify-content:space-between"><span class="tag" id="cWal">⭐ ${wallet()} כוכבים</span><span class="muted">${lia()?'':'כוכבים מקבלים במשחק האילוף ובטיפול היומי'}</span></div>
   <button class="btn ghost" data-act="petShot">📸 צילום לאלבום</button>
-  <div class="seg wrap" role="group" aria-label="סוג פריט">${SLOTS.map(s=>`<button data-act="dtab" data-s="${s.k}" aria-pressed="${s.k===sl}">${s.e} ${s.n}</button>`).join('')}</div>
-  ${sl==='breed'?`<div class="items">${BREEDS.map(([id,n,e,d])=>{const on=(D().breed||'poodle')===id;return `<button class="item ${on?'worn':''}" data-act="breed" data-id="${id}" data-n="${n}"><span class="sw">${e}</span><b>${n}</b><span class="price">${on?'עכשיו ✓':d}</span></button>`}).join('')}</div><p class="muted">הבגדים מתאימים את עצמם לכל גזע. את צבע הפרווה אפשר לשנות בלשונית צבע פרווה.</p>`:sl==='fur'?`<div class="items">${FURS.map(([n,c])=>`<button class="item ${FUR()===c?'worn':''}" data-act="furc" data-c="${c}" data-n="${n}"><span class="sw" style="background:${c.startsWith('tri:')?'linear-gradient(135deg,#1c1612 0 38%,#aa6834 38% 68%,#f4efe6 68%)':c};border:3px solid var(--line)"></span><b>${n}</b><span class="price">${FUR()===c?'עכשיו ✓':'חינם'}</span></button>`).join('')}
+  <div class="seg wrap" role="group" aria-label="סוג פריט">${SLOTS.filter(s=>!petCat()||['hat','neck','face','fur'].includes(s.k)).map(s=>`<button data-act="dtab" data-s="${s.k}" aria-pressed="${s.k===sl}">${s.e} ${s.n}</button>`).join('')}</div>
+  ${sl==='breed'?`<div class="items">${BREEDS.map(([id,n,e,d])=>{const on=(D().breed||'poodle')===id;return `<button class="item ${on?'worn':''}" data-act="breed" data-id="${id}" data-n="${n}"><span class="sw">${e}</span><b>${n}</b><span class="price">${on?'עכשיו ✓':d}</span></button>`}).join('')}</div><p class="muted">הבגדים מתאימים את עצמם לכל גזע. את צבע הפרווה אפשר לשנות בלשונית צבע פרווה.</p>`:sl==='fur'&&petCat()?catBreedPick(D().catBreed||'tabby','catCoat')+'<p class="muted">לחתול בוחרים גזע וצבע יחד. גזעים נעולים נפתחים בכוכבים.</p>':sl==='fur'?`<div class="items">${FURS.map(([n,c])=>`<button class="item ${FUR()===c?'worn':''}" data-act="furc" data-c="${c}" data-n="${n}"><span class="sw" style="background:${c.startsWith('tri:')?'linear-gradient(135deg,#1c1612 0 38%,#aa6834 38% 68%,#f4efe6 68%)':c};border:3px solid var(--line)"></span><b>${n}</b><span class="price">${FUR()===c?'עכשיו ✓':'חינם'}</span></button>`).join('')}
    <label class="item" for="photo2"><span class="sw">📷</span><b>מתמונה</b><span class="price">צבע מהכלב שלכם</span></label></div><input class="file" id="photo2" type="file" accept="image/*" aria-label="צבע פרווה מתמונה">`:`<div class="items">
    <button class="item ${p.wear[sl]?'':'worn'}" data-act="wear" data-id="none" data-s="${sl}"><span class="sw">🚫</span><b>בלי</b></button>
-   ${ITEMS.filter(i=>i.slot===sl).map(i=>{const own=p.own.includes(i.id),on=p.wear[sl]===i.id;
+   ${ITEMS.filter(i=>i.slot===sl&&(!petCat()||CATOK.includes(i.id))).map(i=>{const own=p.own.includes(i.id),on=p.wear[sl]===i.id;
      return `<button class="item ${on?'worn':''} ${own?'':'locked'}" data-act="wear" data-id="${i.id}"><span class="sw" style="background:${i.c}">${i.e}</span><b>${i.n}</b><span class="price">${on?'לובש ✓':own?'שלך':'⭐ '+i.p}</span></button>`}).join('')}
   </div>`}
   <button class="btn sun" data-act="go" data-s="game">🎮 לצבור כוכבים במשחק</button>`};
@@ -2427,7 +2473,6 @@ const sugOf=(a,off)=>{const l=nameList(a);return [0,1,2,3,4,5].map(i=>l[(off+i)%
 const AGES=[3,4,5,6,7,8,9,10,11,12,13,14];
 const MODES=[['auto','לפי גיל'],['simple','פשוט'],['full','מתקדם']];
 const modeNote=`<p class="muted">פשוט: הקראה של כל טקסט, פחות מילים ושלבים קלים. מתקדם: כל הטריקים, השלבים והפרטים. "לפי גיל" בוחר פשוט עד גיל 6.</p>`;
-function animalPick(cur){return `<div class="grid2"><button class="item ${cur!=='cat'?'worn':''}" data-act="noop" aria-pressed="true"><span class="sw">🐕</span><b>כלב</b><span class="price">${cur!=='cat'?'נבחר ✓':''}</span></button><button class="item locked" disabled aria-disabled="true"><span class="sw">🐱</span><b>חתול</b><span class="price">בקרוב</span></button></div>`}
 function breedPick(cur,act){return `<div class="items">${BREEDS.map(([id,n,e,d])=>{const lk=act==='breed'&&!bOpen(X(),id),need=act==='breed'?Math.max(0,(BTHR[id]||0)-D().game.stars):0;return `<button class="item ${cur===id?'worn':''} ${lk?'locked':''}" data-act="${lk?'collLock':act}" data-id="${id}" data-n="${n}" data-need="${need}"><span class="sw">${lk?'🔒':e}</span><b>${n}</b><span class="price">${cur===id?'נבחר ✓':lk?'עוד '+need+' כוכבים':d}</span></button>`}).join('')}</div>`}
 function petNames(cur,animal,off,act){return `<div class="chips">${sugOf(animal,off).map(n=>`<button class="chip ${nkStrip(cur)===nkStrip(n)?'on':''}" data-act="${act}" data-v="${esc(n)}">${n}</button>`).join('')}<button class="chip more" data-act="${act==='nuPick'?'nuMore':'pfMore'}">🔄 עוד שמות</button></div>`}
 
@@ -2438,9 +2483,9 @@ V.newu=()=>{const n=S.nu||(S.nu={g:'f',name:'',age:null,mode:'auto',animal:'dog'
    <div class="nm"><input id="nuName" maxlength="24" value="${esc(n.name)}" placeholder="כותבים כאן" autocomplete="off" aria-label="השם">${nkBtn("nuNk","name")}</div></div>
   <div class="card nu"><h3>2. בן או בת כמה?</h3><div class="seg" role="group" aria-label="מגדר"><button data-act="nuG" data-v="f" aria-pressed="${n.g!=='m'}">👧 בת</button><button data-act="nuG" data-v="m" aria-pressed="${n.g==='m'}">👦 בן</button></div><div class="chips">${AGES.map(a=>`<button class="chip ${n.age===a?'on':''}" data-act="nuAge" data-v="${a}">${a}</button>`).join('')}</div></div>
   <div class="card nu"><h3>3. איזה מצב?</h3><div class="seg" role="group" aria-label="מצב">${MODES.map(([k,t])=>`<button data-act="nuMode" data-v="${k}" aria-pressed="${n.mode===k}">${t}</button>`).join('')}</div>${n.age!=null?`<p class="tag">יהיה ${sim?'מצב פשוט':'מצב מתקדם'}</p>`:''}${modeNote}</div>
-  <div class="card nu"><h3>4. איזו חיה?</h3>${animalPick(n.animal)}</div>
-  <div class="card nu"><h3>5. איזה גזע?</h3>${breedPick(n.breed,'nuBreed')}</div>
-  <div class="card nu"><h3>6. איך קוראים לכלב?</h3>
+  <div class="card nu"><h3>4. איזו חיה?</h3>${animalPick(n.animal,'nuAni')}</div>
+  <div class="card nu"><h3>5. איזה גזע?</h3>${n.animal==='cat'?catBreedPick(n.cbreed||'tabby','nuCatBr'):breedPick(n.breed,'nuBreed')}</div>
+  <div class="card nu"><h3>${n.animal==='cat'?'6. איך קוראים לחתול?':'6. איך קוראים לכלב?'}</h3>
    <div class="nm"><input id="nuPet" maxlength="24" value="${esc(n.pet)}" placeholder="בוחרים או כותבים" autocomplete="off" aria-label="שם הכלב">${nkBtn("nuNk","pet")}</div>
    ${petNames(n.pet,n.animal,n.off,'nuPick')}</div>
   <button class="btn sun big" data-act="nuSave">🐾 יוצאים לדרך!</button>`};
@@ -2450,9 +2495,9 @@ V.prof=()=>{const u=U();if(!u){S.screen='login';return V.login()}const d=D();S.p
   <div class="card nu"><h3>השם שלי</h3>
    <div class="nm"><input id="pfName" maxlength="24" value="${esc(u.name)}" autocomplete="off" aria-label="השם">${nkBtn("pfNk","name")}</div></div>
   <div class="card nu"><h3>גיל ומגדר</h3><div class="seg" role="group" aria-label="מגדר"><button data-act="pfG" data-v="f" aria-pressed="${u.g!=='m'}">👧 בת</button><button data-act="pfG" data-v="m" aria-pressed="${u.g==='m'}">👦 בן</button></div><div class="chips">${AGES.map(a=>`<button class="chip ${u.age===a?'on':''}" data-act="pfAge" data-v="${a}">${a}</button>`).join('')}</div></div>
-  <div class="card nu"><h3>מצב</h3><div class="seg" role="group" aria-label="מצב">${MODES.map(([k,t])=>`<button data-act="pfMode" data-v="${k}" aria-pressed="${u.mode===k}">${t}</button>`).join('')}</div><p class="tag">עכשיו: ${lia()?'מצב פשוט':'מצב מתקדם'}</p>${modeNote}</div>
-  <div class="card nu"><h3>החיה שלי</h3>${animalPick(u.animal)}</div>
-  <div class="card nu"><h3>הגזע</h3>${breedPick(d.breed||'poodle','breed')}<p class="muted">החלפת גזע מחזירה את צבע הפרווה לצבע של הגזע. הבגדים נשארים.</p></div>
+  <div class="card nu"><h3>מצב</h3><div class="seg" role="group" aria-label="מצב">${MODES.map(([k,t])=>`<button data-act="pfMode" data-v="${k}" aria-pressed="${u.mode===k}">${t}</button>`).join('')}</div><p class="tag">עכשיו: ${lia()?'מצב פשוט':'מצב מתקדם'}</p><p class="tag">רמת קושי לפי גיל: ${BANDN[ageBand()]}</p>${modeNote}</div>
+  <div class="card nu"><h3>החיה שלי</h3>${animalPick(u.animal,'pfAni')}</div>
+  <div class="card nu"><h3>הגזע</h3>${u.animal==='cat'?catBreedPick(d.catBreed||'tabby','pfCatBr'):breedPick(d.breed||'poodle','breed')}<p class="muted">החלפת גזע מחזירה את צבע הפרווה לצבע של הגזע. הבגדים נשארים.</p></div>
   <div class="card nu"><h3>שם הכלב</h3>
    <div class="nm"><input id="pfPet" maxlength="24" value="${esc(DN())}" autocomplete="off" aria-label="שם הכלב">${nkBtn("pfNk","pet")}</div>
    ${petNames(DN(),u.animal,S.pfOff,'pfPick')}</div>
@@ -2474,8 +2519,8 @@ Object.assign(A,{
    if(!n.name){toast('כותבים קודם את השם');const i=$('#nuName');if(i)i.focus();return}
    if(n.age==null){toast('בוחרים גיל');return}
    const id='u'+Date.now().toString(36),used=S.users.map(u=>u.color),color=UCOL.find(c=>!used.includes(c))||UCOL[S.users.length%UCOL.length];
-   S.users.push({id,name:n.name.slice(0,24),age:n.age,color,animal:'dog',mode:n.mode,g:n.g==='m'?'m':'f'});
-   const d=blank();d.breed=n.breed;const c=GL.ok&&GL.breedColor?GL.breedColor(n.breed):null;d.fur=c||'rgb(162,106,70)';
+   S.users.push({id,name:n.name.slice(0,24),age:n.age,color,animal:n.animal==='cat'?'cat':'dog',mode:n.mode,g:n.g==='m'?'m':'f'});
+   const d=blank();d.breed=n.breed;if(n.animal==='cat')d.catBreed=n.cbreed||'tabby';const c=GL.ok&&GL.breedColor?GL.breedColor(n.breed):null;d.fur=c||'rgb(162,106,70)';
    d.dogName=(String(n.pet||'').trim()||sugOf(n.animal,n.off)[0]).slice(0,24);S.data[id]=d;save();
    S.nu=null;S.who=id;S.trick=null;go('home');setTimeout(()=>speak(greet(),'yip'),150)},
  pfNk:e=>{const f=e.dataset.f;nkInto(f==='name'?'pfName':'pfPet',v=>{if(f==='name')U().name=v.slice(0,24);else D().dogName=v.slice(0,24);save()})},
@@ -2510,7 +2555,7 @@ function mmGrid(){const m=S.mm;return m.cards.map(c=>`<button class="mc ${c.f||c
 V.mem=()=>{const m=S.mm,w=X().mem.w;
   if(!m)return `${header('משחק זיכרון')}
   <div class="avatarWrap">${avatar('dog','happy')}<div class="bubble ${lia()?'lia':''}">מוצאים זוגות של קלפים. איזו רמה?</div></div>
-  <div class="card nu"><div class="grid2">${Object.keys(MML).filter(k=>!lia()||k!=='h').map(k=>`<button class="item" data-act="mmLv" data-v="${k}"><span class="sw">${MML[k].ic}</span><b>${MML[k].t}</b><span class="price">${MML[k].n} זוגות${w[k]?' · ניצחונות: '+w[k]:''}</span></button>`).join('')}</div></div>`;
+  <div class="card nu"><div class="grid2">${Object.keys(MML).filter(k=>!lia()||k!=='h').map(k=>`<button class="item" data-act="mmLv" data-v="${k}"><span class="sw">${MML[k].ic}</span><b>${MML[k].t}</b><span class="price">${MML[k].n} זוגות${REC[ageBand()]===k?' · מומלץ':''}${w[k]?' · ניצחונות: '+w[k]:''}</span></button>`).join('')}</div></div>`;
   return `${header('משחק זיכרון')}
   <div class="row" style="justify-content:space-between"><span class="tag">${MML[m.lv].ic} ${MML[m.lv].t}</span><span class="tag">מהלכים: <b id="mmMoves">${m.moves}</b></span></div>
   <div class="mgrid c${MML[m.lv].c}" id="mmGrid">${mmGrid()}</div>
@@ -2533,8 +2578,8 @@ Object.assign(A,{
 /* ---------- מסלול מכשולים ---------- */
 const OBS=[{k:'hurdle',e:'🚧',n:'משוכה',sg:'jump'},{k:'poles',e:'🎋',n:'מוטות',sg:'spin'},{k:'tunnel',e:'🕳️',n:'מנהרה',sg:'down'},{k:'table',e:'🪑',n:'שולחן עצירה',sg:'sit'},{k:'bell',e:'🔔',n:'פעמון',sg:'touch'},{k:'hoop',e:'⭕',n:'חישוק',sg:'jump'}];
 const OBSG=['jump','spin','down','sit','touch'];
-function obStart(){const L=lia()?3:5,pool=OBS.slice().sort(()=>Math.random()-.5);const list=[];for(let i=0;i<L;i++)list.push(pool[i%pool.length]);
-  S.ob={list,i:0,err:0,busy:false,hint:lia(),done:false,got:0}}
+function obStart(){const L={little:3,mid:4,big:5}[ageBand()],pool=OBS.slice().sort(()=>Math.random()-.5);const list=[];for(let i=0;i<L;i++)list.push(pool[i%pool.length]);
+  S.ob={list,i:0,err:0,busy:false,hint:ageBand()!=='big',done:false,got:0}}
 const sgn=id=>GSIGNS.find(s=>s.id===id);
 function obTrack(){const o=S.ob;return o.list.map((x,i)=>`<span class="ob ${i<o.i?'done':i===o.i&&!o.done?'now':''}"><i>${i<o.i||o.done?'✅':x.e}</i>${o.hint||i<o.i?'<small>'+x.n+'</small>':''}</span>`).join('')+`<span class="ob fin"><i>🏁</i></span>`}
 function obPrompt(){const o=S.ob,x=o.list[o.i];return o.done?'':('הגענו ל'+x.e+' '+x.n+'! איזו פקודה נותנים?')}
@@ -2670,7 +2715,7 @@ V.learn=()=>{const L=S.lr||(S.lr={c:'dogs',i:0,quiz:null});const d=Y();
   return `${header('כרטיסיות לימוד')}
   <div class="seg wrap" role="group" aria-label="נושא">${LCAT.map(([id,e,n])=>`<button data-act="lrCat" data-v="${id}" aria-pressed="${L.c===id}">${e} ${n}</button>`).join('')}</div>
   <div class="card lcard">${is3?`<div class="avatarWrap">${avatar(k.cat?'cat':'dog','happy')}</div>`:`<div class="lemo">${k.e}</div>`}
-   <h2>${k.t}</h2><p>${lia()?k.s:k.l}</p></div>
+   <h2>${k.t}</h2><p>${ageBand()==='little'?k.s:k.l}</p></div>
   <div class="row" style="justify-content:space-between"><button class="btn ghost" data-act="lrNav" data-v="-1" ${L.i===0?'disabled':''}>→ הקודם</button><span class="tag">${L.i+1} / ${list.length}</span><button class="btn ghost" data-act="lrNav" data-v="1" ${L.i===list.length-1?'disabled':''}>הבא ←</button></div>
   <button class="btn sun big" data-act="lrQuiz">🧠 חידון על ${LCAT.find(x=>x[0]===L.c)[2]}</button>
   ${d.learn.best[L.c]!=null?`<p class="muted" style="text-align:center">השיא שלך בחידון הזה: ${d.learn.best[L.c]}</p>`:''}`};
@@ -2685,7 +2730,7 @@ function learnQuiz(){const Q=S.lr.quiz,q=Q.qs[Q.i];
 Object.assign(A,{
  lrCat:e=>{S.lr={c:e.dataset.v,i:0,quiz:null};render();const k=learnCard();if(lia())setTimeout(()=>speak(k.t+'. '+k.s,null,true),200)},
  lrNav:e=>{const L=S.lr,n=lcs(L.c).length;L.i=Math.max(0,Math.min(n-1,L.i+(+e.dataset.v)));render();const k=learnCard();if(lia())setTimeout(()=>speak(k.t+'. '+k.s,null,true),200)},
- lrQuiz:()=>{const L=S.lr,n=lia()?3:5,pool=lcs(L.c).slice().sort(()=>Math.random()-.5).slice(0,n);
+ lrQuiz:()=>{const L=S.lr,n={little:3,mid:4,big:5}[ageBand()],pool=lcs(L.c).slice().sort(()=>Math.random()-.5).slice(0,n);
   L.quiz={i:0,ok:0,ans:null,got:0,qs:pool.map(k=>{const o=lia()?[k.q[1],k.q[2]]:[k.q[1],k.q[2],(LC.filter(x=>x.c!==L.c)[Math.floor(Math.random()*8)]||k).q[1]];return {e:k.e,q:k.q[0],r:k.q[1],o:o.sort(()=>Math.random()-.5)}})};render();speak(L.quiz.qs[0].q,null,true)},
  lrAns:e=>{const Q=S.lr.quiz;if(!Q||Q.ans!=null)return;Q.ans=+e.dataset.i;const q=Q.qs[Q.i],ok=q.o[Q.ans]===q.r;if(ok){Q.ok++;chime()}render();speak(ok?'נכון!':'התשובה הנכונה: '+q.r,ok?'yip':null,!ok)},
  lrNext:()=>{const Q=S.lr.quiz;Q.i++;Q.ans=null;if(Q.i>=Q.qs.length){const d=Y(),c=S.lr.c,n=Q.qs.length;d.learn.best[c]=Math.max(d.learn.best[c]||0,Q.ok);Q.got=Q.ok===n?2:Q.ok>=Math.ceil(n/2)?1:0;addStars(Q.got);save();render();speak(Q.got?'כל הכבוד!':'כמעט! ננסה שוב?','yip');return}render();speak(Q.qs[Q.i].q,null,true)},
@@ -2797,13 +2842,82 @@ const homeCard=()=>`<div class="card"><h3>📱 הוספה למסך הבית</h3>
   <p class="muted">כשהאפליקציה פתוחה דרך הקישור של Claude, הקיצור יפתח את הדף של Claude. אפליקציה מלאה עם אייקון משלה תהיה זמינה כשהיא תעלה לכתובת משלה או לחנות.</p>
   <button class="btn ghost" data-act="fullScr">⛶ מסך מלא</button></div>`;
 
-function afterMount(){if(!GL.ok)return;let cb=S.catBreed||'tabby';
+function afterMount(){if(!GL.ok)return;let cb=(petCat()&&S.screen!=='translate')?(D().catBreed||'tabby'):(S.screen==='newu'&&S.nu&&S.nu.animal==='cat'?(S.nu.cbreed||'tabby'):(S.catBreed||'tabby'));
   if(S.screen==='learn'&&S.lr&&!S.lr.quiz){const k=learnCard();if(k&&k.cat)cb=k.cat;if(k&&k.br){GL.setBreed(k.br);const c=(GL.breedColor&&GL.breedColor(k.br))||'rgb(162,106,70)',m=String(c).match(/\d+/g);if(m&&m.length>=3)GL.setFur(m.slice(0,3).map(Number),false)}}
   if(GL.setCatBreed)GL.setCatBreed(cb)}
 
 /* ניקוד בלשון נקבה לפעלי עבר בגוף שני, כשהמשתמשת היא בת */
 const GNF=[['עָנִיתָ','עָנִית'],['קִיבַּלְתָּ','קִיבַּלְתְּ'],['צָדַקְתָּ','צָדַקְתְּ'],['עָבַרְתָּ','עָבַרְתְּ'],['נָפַלְתָּ','נָפַלְתְּ'],['נָתַתָּ','נָתַתְּ'],['עָשִׂיתָ','עָשִׂית']];
 function gndNk(t){if(S.lang!=='he'||!U()||U().g==='m')return t;let s=String(t);GNF.forEach(([m,f])=>{if(s.indexOf(m)>=0)s=s.split(m).join(f)});return s}
+
+/* ======== גרסה 17: חתול כחיית מחמד, רמות קושי לפי גיל, סיפור יומי ======== */
+function petCat(){const u=U();return !!(u&&u.animal==='cat')}
+const CATSKIP=/^(learn|translate|safety|about|parent|pstats|played|real|stest|login|newu)$/;
+let NOCAT=false;
+function catW(t){if(NOCAT||!petCat()||CATSKIP.test(S.screen))return t;let s=String(t);
+  if(S.lang==='en')return s.replace(/\b(D|d)ogs\b/g,(m,c)=>c==='D'?'Cats':'cats').replace(/\b(D|d)og\b/g,(m,c)=>c==='D'?'Cat':'cat');
+  return s.replace(/(^|[^א-תְ-ׇ])((?:[והלמשכב][ְ-ׇ]*){0,3})כ[ְ-ׇ]*ל[ְ-ׇ]*ב[ְ-ׇ]*(?![א-ת])/g,(m,a,b)=>a+b+'חתול')}
+/* חתול: צרכים, הודעות ועובדות */
+function NI(n){if(!petCat())return n;if(n.k==='fun')return {...n,ic:'🪶',n:'נוצה'};if(n.k==='play')return {...n,ic:'🧶',n:'צמר'};return n}
+const LOWMSG_CAT={food:'מיאו! אני רעב. אפשר ארוחה?',water:'אני צמא. אפשר מים טריים?',clean:'הפרווה שלי מסתבכת. אפשר לברש אותי?',fun:'משעמם לי. בא לי לצוד נוצה!',rest:'אני עייף. אפשר לנמנם קצת?',play:'בא לי לרדוף אחרי כדור צמר!'};
+function LM(k){return petCat()?LOWMSG_CAT[k]:LM(k)}
+const FACTS_CAT={
+ food:'חתול אוכל כמה ארוחות קטנות ביום. אסור לתת לחתול שוקולד, בצל או חלב רגיל, הם עושים לו רע.',
+ water:'חתולים לא שותים הרבה, אז מחליפים להם מים כל יום, ואפשר לשים את הקערה רחוק מהאוכל.',
+ clean:'חתולים מנקים את עצמם עם הלשון. מברשת עוזרת להוציא שיער ישן, במיוחד לחתול עם פרווה ארוכה.',
+ fun:'חתולים אוהבים לצוד. משחקים איתם בחכה עם נוצה, ולא עם הידיים, כדי שלא ילמדו לשרוט.',
+ rest:'חתולים ישנים 12 עד 16 שעות ביום. כשהחתול ישן, משאירים אותו בשקט.',
+ play:'כדור צמר, קופסה ריקה ומגדל גירוד הם צעצועים שחתולים אוהבים. משחקים כמה דקות כמה פעמים ביום.'};
+const CATOK=['party','top','crown','collarR','collarB','bowR','bowB','sun','heart'];
+const CBTHR={tabby:0,siamese:10,black:20,grey:30,persian:45,tuxedo:60};
+function cOpen(d,id){return (CBTHR[id]||0)<=d.game.stars||(d.unlC||[]).includes(id)||(d.catBreed||'tabby')===id}
+function catBreedPick(cur,act){const lock=act!=='nuCatBr',d=lock?D():null;
+  return `<div class="items">${CATBR.map(([id,n,e,ds])=>{const lk=lock&&!cOpen(d,id),need=lock?Math.max(0,(CBTHR[id]||0)-d.game.stars):0;
+   return `<button class="item ${cur===id?'worn':''} ${lk?'locked':''}" data-act="${lk?'collLock':act}" data-id="${id}" data-n="${n}" data-need="${need}"><span class="sw">${lk?'🔒':e}</span><b>${n}</b><span class="price">${cur===id?'נבחר ✓':lk?'עוד '+need+' כוכבים':ds}</span></button>`}).join('')}</div>`}
+function setCatBreed(id,n){const d=D();if(!Array.isArray(d.unlC))d.unlC=[];const old=d.catBreed||'tabby';if(!d.unlC.includes(old))d.unlC.push(old);d.catBreed=id;save();render();speak('עכשיו אני '+n+'!','yip')}
+Object.assign(A,{
+ nuAni:e=>{S.nu.animal=e.dataset.v==='cat'?'cat':'dog';S.nu.pet='';render()},
+ pfAni:e=>{const u=U(),v=e.dataset.v==='cat'?'cat':'dog';if(u.animal===v)return;u.animal=v;if(v==='cat'&&!D().catBreed)D().catBreed='tabby';save();render();setTimeout(()=>speak(greet(),'yip'),200)},
+ nuCatBr:e=>{S.nu.cbreed=e.dataset.id;render();if(GL.ok&&GL.setCatBreed)GL.setCatBreed(S.nu.cbreed)},
+ pfCatBr:e=>setCatBreed(e.dataset.id,e.dataset.n),
+ catCoat:e=>setCatBreed(e.dataset.id,e.dataset.n)});
+function animalPick(cur,act){const c=cur==='cat';return `<div class="grid2"><button class="item ${!c?'worn':''}" data-act="${act}" data-v="dog" aria-pressed="${!c}"><span class="sw">🐕</span><b>כלב</b><span class="price">${!c?'נבחר ✓':''}</span></button><button class="item ${c?'worn':''}" data-act="${act}" data-v="cat" aria-pressed="${c}"><span class="sw">🐈</span><b>חתול</b><span class="price">${c?'נבחר ✓':''}</span></button></div>`}
+const collDog=V.coll;
+V.coll=()=>{if(!petCat())return collDog();const d=D(),cur=d.catBreed||'tabby',n=CATBR.filter(b=>cOpen(d,b[0])).length;
+  return `${header('אוסף הגזעים')}
+  <div class="avatarWrap">${avatar('cat','happy')}<div class="bubble ${lia()?'lia':''}">${n} מתוך ${CATBR.length} גזעים פתוחים. כוכבים פותחים עוד!</div></div>
+  ${catBreedPick(cur,'catCoat')}
+  <p class="muted">כוכבים מרוויחים במשחק האילוף, בזיכרון, במסלול, בחידונים ובאתגר היומי.</p>`};
+
+/* ---------- רמות קושי לפי גיל ---------- */
+function ageBand(){const u=U();if(!u)return 'big';if(simpleOf(u))return 'little';return (+u.age||0)<=8?'mid':'big'}
+const BANDN={little:'קטנים (עד 5 או מצב פשוט)',mid:'אמצע (6 עד 8)',big:'גדולים (9 ומעלה)'};
+const GW=()=>ageBand()==='mid'?1.5:1;
+const REC={little:'e',mid:'m',big:'h'};
+
+/* ---------- הסיפור היומי ---------- */
+const STORIES=[
+ {e:'🎾',t:'הכדור שנעלם',p:['בוקר אחד {n} התעורר וחיפש את הכדור האהוב עליו.','הוא חיפש מתחת לספה, מאחורי הווילון ואפילו בתוך הנעל.','פתאום הוא הריח משהו מוכר. האף שלו הוביל אותו לגינה.','שם, ליד העץ, חיכה הכדור, מלא בבוץ.','{n} קפץ משמחה והביא אותו בגאווה הביתה.','מה למדנו? לכלב יש אף חזק מאוד, והוא מוצא דברים לפי הריח.']},
+ {e:'🛁',t:'יום האמבטיה',p:['היום יום אמבטיה, ו{n} לא בטוח שהוא אוהב מים.','הוא התחבא מאחורי הדלת והציץ החוצה.','אמרו לו בקול רך: "אתה בטוח, אנחנו פה איתך".','המים היו פושרים ונעימים, והסבון הריח כמו תפוח.','אחרי האמבטיה {n} התנער, ריסס את כולם, וכולם צחקו.','מה למדנו? מדברים בשקט ובעדינות כשבעל חיים מפחד.']},
+ {e:'🦴',t:'הטריק החדש',p:['{n} רצה ללמוד טריק חדש: לתת כף.','בפעם הראשונה הוא רק הריח את היד.','בפעם השנייה הוא הרים כף קטנה, ומיד שמע קליק וקיבל חטיף.','בפעם השלישית הכף עלתה מהר יותר.','בסוף היום {n} נתן כף לכל המשפחה, אפילו לסבתא.','מה למדנו? קליק וחטיף מהר עוזרים ללמוד, ומתרגלים קצת בכל פעם.']},
+ {e:'🌧️',t:'סערה בלילה',p:['בלילה התחיל רעם חזק, ו{n} נבהל מאוד.','הוא רעד והתחבא מתחת למיטה.','לא משכו אותו החוצה. רק ישבו לידו בשקט ושמו לו שמיכה רכה.','לאט לאט הרעמים התרחקו, והוא יצא להתכרבל.','בבוקר השמש זרחה, ו{n} רץ לשחק כאילו כלום לא קרה.','מה למדנו? כשבעל חיים מפחד נותנים לו מקום בטוח ולא מכריחים אותו.']},
+ {e:'🐕',t:'חבר חדש בפארק',p:['בפארק {n} פגש כלב גדול ושמח.','לפני שהתקרבו, הילדים שאלו את הבעלים אם מותר.','הבעלים אמר שכן, ושניהם הריחו זה את זה בסקרנות.','אחרי רגע שניהם התחילו לרוץ במעגלים.','בסוף היום {n} חזר הביתה עייף ומרוצה.','מה למדנו? תמיד שואלים את הבעלים לפני שמתקרבים לכלב שלא מכירים.']},
+ {e:'🎂',t:'יום ההולדת',p:['היום יום ההולדת של {n}!','הכינו לו עוגה מיוחדת מגזר ובננה, בלי שוקולד, כי שוקולד מסוכן לבעלי חיים.','כל המשפחה שרה לו שיר, והוא קפץ פעמיים כמו בשיר.','הוא קיבל צעצוע חדש ושיחק בו כל הערב.','בלילה {n} נרדם מחובק עם הצעצוע החדש.','מה למדנו? לא כל אוכל של בני אדם מתאים לבעלי חיים.']},
+ {e:'🏃',t:'המרוץ הגדול',p:['במסלול המכשולים {n} רצה לנצח.','הוא קפץ מעל המשוכה, זחל במנהרה והסתובב בין המוטות.','בשולחן העצירה הוא היה צריך לחכות, וזה היה הכי קשה.','הוא חיכה בסבלנות, ואז רץ לקו הסיום.','כולם מחאו כפיים, ו{n} קיבל חטיף וליטוף.','מה למדנו? גם לחכות בסבלנות זה כישרון.']},
+ {e:'🌙',t:'לילה טוב',p:['הגיע הלילה ו{n} מפהק פיהוק גדול.','הוא מסתובב שלוש פעמים במיטה שלו ומתכרבל.','בחוץ הירח מאיר, והבית שקט.','{n} חולם על כדורים, חטיפים והרבה ליטופים.','מחר מחכה לו עוד יום של משחק ולמידה.','לילה טוב, {n}.']}];
+function storyIdx(){return Math.floor((Date.now()-new Date().getTimezoneOffset()*60000)/864e5)%STORIES.length}
+V.story=()=>{const i=S.stI==null?storyIdx():S.stI,st=STORIES[(i+STORIES.length)%STORIES.length],d=D(),today=storyIdx()===((i+STORIES.length)%STORIES.length);
+  const dn=esc(DN()),ps=st.p.map(x=>x.split('{n}').join(dn)),show=ageBand()==='little'?ps.slice(0,4).concat(ps.slice(-1)):ps;
+  const got=d.story&&d.story.day===dayKey();
+  return `${header('הסיפור של היום')}
+  <div class="card story"><div class="lemo">${st.e}</div><h2>${st.t}</h2>${show.map(x=>`<p>${x}</p>`).join('')}</div>
+  <button class="btn sun big" data-act="stRead">🔊 הקראת הסיפור</button>
+  ${today?(got?`<p class="tag" style="align-self:center">⭐ קיבלת כוכב על הסיפור של היום</p>`:`<button class="btn good" data-act="stDone">✅ סיימתי לקרוא ⭐</button>`):''}
+  <div class="row" style="justify-content:space-between"><button class="btn ghost" data-act="stNav" data-v="-1">→ סיפור קודם</button><button class="btn ghost" data-act="stNav" data-v="1">סיפור הבא ←</button></div>`};
+Object.assign(A,{
+ stRead:()=>{const ps=[...document.querySelectorAll('.story h2,.story p')].map(x=>x.innerText).join(' ');speak(ps,null,true)},
+ stNav:e=>{S.stI=(S.stI==null?storyIdx():S.stI)+(+e.dataset.v);render()},
+ stDone:()=>{const d=D();if(d.story&&d.story.day===dayKey())return;d.story={day:dayKey()};addStars(1);render();speak('כל הכבוד! קראנו סיפור.','yip')}});
 
 render();
 })();
