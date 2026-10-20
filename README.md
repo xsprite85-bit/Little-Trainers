@@ -5,14 +5,25 @@ Single self-contained HTML page (Hebrew RTL + English), 3D characters with three
 
 Live (private) version: https://claude.ai/artifact/NVrmaA6HFmeni4Zn9YKoKf
 
+Web app (works offline, installable): https://xsprite85-bit.github.io/Little-Trainers/
+Privacy policy (draft): https://xsprite85-bit.github.io/Little-Trainers/app/privacy.html
+
 ## Build
 
 ```bash
-cd src
-python3 build.py     # writes ../dist/index.html
+python3 src/build.py
 ```
 
-`dist/index.html` is the whole app in one file; open it in a browser or publish it as is.
+It writes two outputs from the same sources:
+- `dist/index.html` – one file for the Claude artifact (three.js and fonts from CDNs)
+- `app/` – the standalone web app for GitHub Pages and Android: local three.js and fonts (no outside requests), manifest, service worker, icons, privacy page
+
+## Android
+
+Capacitor project in `android/` (app id `com.tinkerdoodle.littletrainers`), with the `@capacitor-community/text-to-speech` plugin because Android WebView has no speech synthesis, and the microphone permission.
+Every push to `main` that touches the app runs **Actions → Android build**, which uploads a debug APK (install on a phone for testing) and an **unsigned** release AAB. Signing for Google Play is added once the developer account exists.
+
+Locally: `npm ci && npm run android:sync`, then open `android/` in Android Studio.
 
 ## Source layout (`src/`)
 
@@ -26,7 +37,8 @@ python3 build.py     # writes ../dist/index.html
 | `styles.css` | All styles |
 | `i18n_en.json` | Hebrew → English dictionary, keyed by Hebrew text without niqqud; applied at runtime to the DOM and to speech |
 | `icon180.b64` | Home-screen icon (PNG, base64) |
-| `build.py` | Concatenates everything into `dist/index.html` |
+| `build.py` | Builds `dist/index.html` and `app/` |
+| `web/` | Static files for `app/`: fonts (OFL), three.js r128 (MIT), icons, privacy page |
 
 ## Adding UI text
 
