@@ -7,7 +7,7 @@
         if(n==='trunk'){s=Math.max(0,Math.min(1,(p[1]-.68)/.08))*(p[0]<.26?1:0);if((p[0]>.28&&p[1]<.74)||p[1]<.5)w=1}
         else if(n==='leg')w=p[1]<.2?1:0;
         else if(n==='head'){const muz=p[0]>.57&&p[1]<1.02,bl=Math.abs(p[2])<.03&&p[0]>.5&&p[1]>1.02;w=(muz||bl)?1:0}
-        else if(n==='jaw')w=1;else if(n==='ear')s=.85;else if(n==='tail')s=.9;
+        else if(n==='jaw')w=1;else if(n==='ear')s=.85;else if(n==='tail'){s=.9;if(p[1]>1.0){s=0;w=1}}
         return[w,s]}
       const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
       const smin=(a,b,k)=>{if(!k)return Math.min(a,b);const h=Math.max(k-Math.abs(a-b),0)/k;return Math.min(a,b)-h*h*k*.25};
@@ -19,6 +19,7 @@
           b:[Math.min(a[0],b[0])-R,Math.min(a[1],b[1])-R,Math.min(a[2],b[2])-R,Math.max(a[0],b[0])+R,Math.max(a[1],b[1])+R,Math.max(a[2],b[2])+R]}};
       // השטחה לאורך ציר z סביב cz (לאוזניים)
       const flatZ=(p,cz,s)=>({f:(x,y,z)=>p.f(x,y,cz+(z-cz)*s)/s,b:[p.b[0],p.b[1],cz+(p.b[2]-cz)/s,p.b[3],p.b[4],cz+(p.b[5]-cz)/s]});
+      const flatX=(p,cx,s)=>({f:(x,y,z)=>p.f(cx+(x-cx)*s,y,z)/s,b:[cx+(p.b[0]-cx)/s,p.b[1],p.b[2],cx+(p.b[3]-cx)/s,p.b[4],p.b[5]]});
       // רשימת צורות -> פונקציית מרחק אחת. איבר: [צורה, ריכוך, 's' לחיתוך]
       function field(list){const fs=list.map(it=>it[0].f),ks=list.map(it=>it[1]||0),ops=list.map(it=>it[2]==='s');
         const F=(x,y,z)=>{let d=fs[0](x,y,z);for(let i=1;i<fs.length;i++){const v=fs[i](x,y,z);d=ops[i]?-smin(-d,v,ks[i]):smin(d,v,ks[i])}return d};
@@ -93,8 +94,8 @@
         const pos=new Float32Array(M.P.length);for(let i=0;i<n;i++){pos[i*3]=M.P[i*3]-abs.x;pos[i*3+1]=M.P[i*3+1]-abs.y;pos[i*3+2]=M.P[i*3+2]-abs.z}
         const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));geo.setAttribute('normal',new THREE.BufferAttribute(new Float32Array(M.N),3));
         const col=new Float32Array(n*3);geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.setIndex(M.idx);
-        const w=new Float32Array(n),t=new Float32Array(n),w2=new Float32Array(n),s2=new Float32Array(n);for(let i=0;i<n;i++){const P=[M.P[i*3],M.P[i*3+1],M.P[i*3+2]];const q=pat(P,kind);w[i]=q[0];t[i]=q[1];const r3=triPat(P,kind);w2[i]=r3[0];s2[i]=r3[1]}
-        rig.paints.push({a:geo.attributes.color,w,t,w2,s:s2});
+        const bk=new Float32Array(n),w=new Float32Array(n),t=new Float32Array(n),w2=new Float32Array(n),s2=new Float32Array(n);for(let i=0;i<n;i++){const P=[M.P[i*3],M.P[i*3+1],M.P[i*3+2]];const q=pat(P,kind);w[i]=q[0];t[i]=q[1];bk[i]=q[2]||0;const r3=triPat(P,kind);w2[i]=r3[0];s2[i]=r3[1]}
+        rig.paints.push({a:geo.attributes.color,w,t,w2,s:s2,b:bk});
         const base=new THREE.Mesh(geo,furMat({layer:0,abs,kind:kind.k}));g.add(base);rig.mats.push(base.material);
         const S=coat.shell;if(S&&!(coat.noShell&&coat.noShell(kind.n)))for(let l=1;l<=S.n;l++){const m=new THREE.Mesh(geo,furMat({layer:l/S.n,len:S.len*(kind.sl||1),grav:S.grav,freq:S.freq,abs,kind:kind.k}));m.renderOrder=l;g.add(m);rig.mats.push(m.material);if(l%2&&l<S.n)(rig.shellOdd=rig.shellOdd||[]).push(m)}
         return{F,M,g,kind}}
@@ -125,15 +126,15 @@
 
       /* ---- עיניים, אף, ציפורניים ---- */
       const SP2=new THREE.SphereGeometry(1,20,14);
-      function eye2(g,at,rad,dir,lidCol){const e=new THREE.Group();e.position.copy(V(at)).sub(g.userData.abs);g.add(e);
+      function eye2(g,at,rad,dir,lidCol,o){o=o||{};const e=new THREE.Group();e.position.copy(V(at)).sub(g.userData.abs);g.add(e);
         const d=V(dir).normalize(),q=new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0,0,1),d);
-        const iris=new THREE.Mesh(SP2,new THREE.MeshStandardMaterial({color:lin(0x3b200f),roughness:.35}));iris.scale.setScalar(rad);e.add(iris);
-        const pup=new THREE.Mesh(SP2,new THREE.MeshStandardMaterial({color:0x040303,roughness:.2}));pup.scale.set(rad*.55,rad*.55,rad*.3);pup.position.copy(d).multiplyScalar(rad*.82);pup.quaternion.copy(q);e.add(pup);
+        const iris=new THREE.Mesh(SP2,new THREE.MeshStandardMaterial({color:lin(o.iris||0x3b200f),roughness:.35}));iris.scale.setScalar(rad);e.add(iris);
+        const pup=new THREE.Mesh(SP2,new THREE.MeshStandardMaterial({color:0x040303,roughness:.2}));if(o.slit)pup.scale.set(rad*.16,rad*.68,rad*.3);else pup.scale.set(rad*.55,rad*.55,rad*.3);pup.position.copy(d).multiplyScalar(rad*.82);pup.quaternion.copy(q);e.add(pup);
         const cor=new THREE.Mesh(SP2,new THREE.MeshStandardMaterial({color:0xffffff,roughness:.03,metalness:.1,transparent:true,opacity:.16}));cor.scale.setScalar(rad*1.06);e.add(cor);
         const gl=new THREE.Mesh(SP2,new THREE.MeshBasicMaterial({color:0xffffff}));gl.scale.setScalar(rad*.2);gl.position.copy(d).multiplyScalar(rad*.92).add(new THREE.Vector3(rad*.25,rad*.38,0));e.add(gl);
         const gl2=new THREE.Mesh(SP2,new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.7}));gl2.scale.setScalar(rad*.09);gl2.position.copy(d).multiplyScalar(rad*.95).add(new THREE.Vector3(-rad*.22,-rad*.3,0));e.add(gl2);
         const lid=new THREE.Mesh(new THREE.TorusGeometry(rad*1.04,rad*.2,10,36),new THREE.MeshStandardMaterial({color:lin(lidCol||0x241712),roughness:.55}));lid.quaternion.copy(q);lid.scale.set(1.12,1,1);lid.position.copy(d).multiplyScalar(rad*.28);e.add(lid);
-        return e}
+        e.userData.iris=iris;return e}
       function nose3(g,at,r,col){const n=new THREE.Group();n.position.copy(V(at)).sub(g.userData.abs);g.add(n);const lt=leatherTex();
         const m=new THREE.MeshStandardMaterial({color:lin(col||0x16110f),roughness:.42,bumpMap:lt,bumpScale:.6});
         const b=new THREE.Mesh(SPH,m);b.scale.set(r[0],r[1],r[2]);n.add(b);
@@ -149,7 +150,7 @@
       const BLK=lin(0x1b1512);
       function paintRig(rig,main,tri){const r=main.r,g=main.g,b=main.b;
         rig.paints.forEach(P=>{const a=P.a.array,n=P.w.length,T3=tri&&P.s;for(let i=0;i<n;i++){let w=P.w[i],t=P.t[i],R=r,G=g,B=b;
-          if(T3){const s=P.s[i];R=r+(BLK.r-r)*s;G=g+(BLK.g-g)*s;B=b+(BLK.b-b)*s;w=P.w2[i]}
+          if(T3){const s=P.s[i];R=r+(BLK.r-r)*s;G=g+(BLK.g-g)*s;B=b+(BLK.b-b)*s;w=P.w2[i]}else if(P.b&&P.b[i]){const k=P.b[i],D=rig.dark||BLK;R=r+(D.r-r)*k;G=g+(D.g-g)*k;B=b+(D.b-b)*k}
           a[i*3]=(R+(WHITE.r-R)*w)*t;a[i*3+1]=(G+(WHITE.g-G)*w)*t;a[i*3+2]=(B+(WHITE.b-B)*w)*t}P.a.needsUpdate=true})}
 
       /* ---- מפרט הגזעים ---- */
@@ -189,6 +190,32 @@
           leg:{ua:.07,uz:.062,fa:.044,fb:.037,tx:.12,tz:.078,ga:.058,gb:.039,px:.054,pz:.045},earPivot:[.5,1.11,.135],tz:.6,
           fit:{H:{c:[.5,1.1,0],o:[.01,-.06,0],s:[.92,.9,.9]},F:{c:[.628,1.07,0],o:[-.012,.01,0],s:[1,1,1.04]},N:{c:[.37,.79,0],o:[0,0,0],s:[.95,.95,.95]}},
           legR:.07,mouth:[.38,.13,0],cam:{y:.72,z:4.15,look:.72}},
+        beagle:{name:'ביגל',color:'tri:rgb(178,110,54)',coat:{shell:{n:3,len:.006,grav:.001,freq:240}},legK:.86,
+          trunk:[[E([.08,.64,0],[.29,.2,.18])],[E([.27,.6,0],[.17,.24,.178]),.08],[E([.2,.75,0],[.15,.095,.14]),.06],[C([-.12,.67,0],[-.33,.66,0],.148,.16),.08],[E([-.35,.665,0],[.19,.18,.185]),.07],[E([.4,.66,0],[.06,.085,.085]),.05],[C([.26,.7,0],[.4,.86,0],.145,.12),.1]],
+          neck:[C([.25,.7,0],[.47,.96,0],.15,.11),.0],
+          head:[[E([.49,1.065,0],[.165,.145,.15])],[E([.41,1.085,0],[.095,.095,.11]),.06],[E([.585,1.11,.056],[.05,.036,.046]),.04],[E([.585,1.11,-.056],[.05,.036,.046]),.04],
+            [E([.57,1.0,.074],[.08,.068,.064]),.05],[E([.57,1.0,-.074],[.08,.068,.064]),.05],[C([.6,1.008,0],[.76,.99,0],.084,.07),.05],
+            [E([.7,.952,.042],[.072,.045,.042]),.03],[E([.7,.952,-.042],[.072,.045,.042]),.03],[E([.616,1.08,.088],[.031,.031,.031]),.012,'s'],[E([.616,1.08,-.088],[.031,.031,.031]),.012,'s']],
+          jaw:[[E([.665,.932,0],[.082,.026,.052])]],
+          ear:s=>[[flatZ(C([.5,1.09,s*.146],[.56,.87,s*.168],.062,.034),s*.152,3.6)],[flatZ(E([.53,.99,s*.158],[.066,.095,.04]),s*.152,3.6),.035]],
+          tail:[[C([-.5,.74,0],[-.6,.93,0],.05,.04)],[C([-.6,.93,0],[-.63,1.09,0],.04,.022),.03]],tailPivot:[-.5,.74,0],
+          eyes:{at:[.614,1.08,.089],r:.026,dir:[.55,.06,.83]},nose:{at:[.812,1.006,0],r:[.032,.03,.047]},
+          leg:{tx:.11,tz:.068},earPivot:[.51,1.1,.145],tz:.6,
+          fit:{H:{c:[.5,1.1,0],o:[0,-.07,0],s:[.92,.88,.88]},F:{c:[.628,1.07,0],o:[-.012,.01,0],s:[1,1,1.08]},N:{c:[.37,.79,0],o:[0,0,0],s:[.92,.92,.92]}},
+          legR:.068,mouth:[.36,.13,0],cam:{y:.66,z:3.95,look:.66}},
+        dachshund:{name:'תחש',color:'rgb(132,62,30)',coat:{shell:{n:3,len:.005,grav:.001,freq:250}},legK:.36,
+          trunk:[[E([-.02,.63,0],[.46,.17,.15])],[E([.26,.58,0],[.16,.19,.15]),.08],[E([.13,.49,0],[.22,.1,.125]),.08],[E([-.12,.54,0],[.26,.09,.12]),.08],[C([-.12,.655,0],[-.44,.665,0],.135,.14),.08],[E([-.46,.67,0],[.14,.15,.15]),.07],[E([.4,.62,0],[.06,.075,.075]),.05],[C([.3,.67,0],[.4,.78,0],.11,.1),.08]],
+          neck:[C([.32,.68,0],[.48,.88,0],.11,.09),.0],
+          head:[[E([.5,.945,0],[.15,.125,.13])],[E([.42,.965,0],[.085,.085,.1]),.06],[E([.575,.99,.048],[.044,.03,.04]),.04],[E([.575,.99,-.048],[.044,.03,.04]),.04],
+            [E([.565,.895,.06],[.07,.055,.05]),.05],[E([.565,.895,-.06],[.07,.055,.05]),.05],[C([.59,.9,0],[.83,.875,0],.068,.044),.05],
+            [E([.74,.848,.03],[.085,.032,.03]),.03],[E([.74,.848,-.03],[.085,.032,.03]),.03],[E([.6,.965,.074],[.026,.026,.026]),.012,'s'],[E([.6,.965,-.074],[.026,.026,.026]),.012,'s']],
+          jaw:[[E([.715,.828,0],[.1,.02,.04])]],
+          ear:s=>[[flatZ(C([.49,.98,s*.12],[.52,.82,s*.14],.06,.042),s*.13,3.2)],[flatZ(E([.51,.89,s*.13],[.066,.082,.035]),s*.13,3.2),.035]],
+          tail:[[C([-.56,.72,0],[-.76,.68,0],.04,.026)],[C([-.76,.68,0],[-.9,.6,0],.026,.012),.025]],tailPivot:[-.56,.72,0],
+          eyes:{at:[.6,.967,.074],r:.022,dir:[.55,.06,.83]},nose:{at:[.858,.88,0],r:[.026,.025,.036]},
+          leg:{ua:.068,uz:.06,fa:.05,fb:.044,tx:.11,tz:.07,ga:.06,gb:.045,px:.062,pz:.05},earPivot:[.5,.99,.12],tz:.6,
+          fit:{H:{c:[.5,1.1,0],o:[0,-.18,0],s:[.84,.8,.8]},F:{c:[.628,1.07,0],o:[-.02,-.104,0],s:[.96,.96,.98]},N:{c:[.37,.79,0],o:[0,-.01,0],s:[.85,.85,.85]}},
+          legR:.06,mouth:[.42,.06,0],cam:{y:.5,z:3.9,look:.48}},
         shihtzu:{name:'שיצו',color:'rgb(186,128,66)',coat:{shell:{n:3,len:.012,grav:.003,freq:200},noShell:n=>n!=='head'&&n!=='jaw'},legK:.66,
           trunk:[[E([.05,.625,0],[.32,.19,.18])],[E([.27,.6,0],[.17,.21,.18]),.08],[E([.2,.73,0],[.15,.09,.14]),.06],[E([-.32,.635,0],[.18,.18,.18]),.08],[E([-.47,.7,0],[.05,.05,.05]),.04],[C([.28,.7,0],[.38,.84,0],.13,.12),.1]],
           neck:[C([.3,.72,0],[.43,.9,0],.125,.115),.0],
@@ -203,9 +230,53 @@
           legR:.062,mouth:[.3,.15,0],cam:{y:.62,z:3.6,look:.6}}
       };
 
+
+      /* ---- חתולים: אותה מערכת כמו הכלבים, בקנה מידה של כלב (המצלמה מתקרבת) ---- */
+      function catSpec(o){const k=o.chub||1,eK=o.earK||1,tl=o.tailR||1,DX=-.05,DY=-.08,h=q=>[q[0]+DX,q[1]+DY,q[2]];
+        return{cat:1,legK:.74,headC:h([.64,1.02,0]),name:o.name,color:o.color,dark:o.dark,iris:o.iris,lid:o.lid||0x2a2220,noseCol:o.nose||0xd98a95,whisk:o.whisk,earK:eK,coat:o.coat,
+          trunk:[[E([0,.66,0],[.42,.17*k,.16*k])],[E([.28,.64,0],[.15,.19*k,.15*k]),.08],[E([-.3,.665,0],[.18,.18*k,.165*k]),.08],[E([0,.77,0],[.3,.075,.12*k]),.06],[E([.02,.56,0],[.24,.07,.11*k]),.07],[C([.3,.72,0],[.44,.86,0],.12,.1),.08]],
+          neck:[C([.34,.72,0],[.5,.88,0],.12*k,.105*k),.0],
+          head:[[E(h([.64,1.02,0]),[.165*k,.15,.175*k])],[E(h([.6,1.1,0]),[.12,.075,.13*k]),.05],[E(h([.7,.955,.075]),[.1,.08,.085*k]),.05],[E(h([.7,.955,-.075]),[.1,.08,.085*k]),.05],
+            [E(h([.795,.952,.032]),[.05,.04,.045]),.03],[E(h([.795,.952,-.032]),[.05,.04,.045]),.03],[E(h([.775,.905,0]),[.045,.028,.04]),.03],[E(h([.78,1.035,.074]),[.03,.03,.03]),.012,'s'],[E(h([.78,1.035,-.074]),[.03,.03,.03]),.012,'s']],
+          jaw:[[E(h([.77,.9,0]),[.046,.015,.04])]],
+          ear:s=>[[flatX(C(h([.6,1.1,s*.1]),h([.6,1.1+.16*eK,s*(.15+.03*eK)]),.08*eK,.006),.6+DX,2.6)]],
+          tail:[[C([-.58,.74,0],[-.76,.9,0],.042*tl,.04*tl)],[C([-.76,.9,0],[-.8,1.2,0],.04*tl,.03*tl),.03]],tailPivot:[-.58,.74,0],
+          eyes:{at:h([.772,1.035,.074]),r:.031,dir:[.78,.05,.62]},nose:{at:h([.835,.975,0]),r:[.016,.013,.022]},
+          leg:{ua:.058,uz:.05,fa:.036,fb:.03,tx:.1,tz:.06,ga:.05,gb:.033,px:.042,pz:.036},earPivot:h([.6,1.12,.1]),tz:.8,
+          fit:{H:{c:[.5,1.1,0],o:[0,0,0],s:[1,1,1]},F:{c:[.628,1.07,0],o:[0,0,0],s:[1,1,1]},N:{c:[.37,.79,0],o:[0,0,0],s:[1,1,1]}},
+          legR:.045,mouth:[.37,.03,0],cam:{y:.56,z:3.3,look:.5},pat:o.pat}}
+      const SH=(n,len,grav)=>({shell:{n,len,grav:grav||.001,freq:260}});
+      const CATS={
+        tabby:{name:'ג׳ינג׳י מפוספס',color:'rgb(222,140,62)',dark:0x9a4a18,iris:0xc9b23a,coat:SH(3,.006),pat:'tabby'},
+        siamese:{name:'סיאמי',color:'rgb(236,224,204)',dark:0x3e2a20,iris:0x4f93e0,coat:SH(3,.004),pat:'point'},
+        black:{name:'חתול שחור',color:'rgb(30,28,32)',iris:0xd8b83a,coat:SH(3,.005),pat:'solid',whisk:0x3a3638},
+        grey:{name:'בריטי קצר שיער',color:'rgb(128,136,148)',iris:0xd88a26,coat:SH(4,.008),pat:'solid',chub:1.13,nose:0x5e6672},
+        persian:{name:'פרסי',color:'rgb(244,240,233)',iris:0x4a8fd8,coat:SH(6,.026,.012),pat:'solid',chub:1.12,earK:.8,tailR:1.5},
+        tuxedo:{name:'טוקסידו',color:'rgb(30,28,32)',iris:0x9ccf3a,coat:SH(3,.005),pat:'tux'},
+        calico:{name:'קליקו',color:'rgb(226,150,74)',dark:0x1c1818,iris:0xd1a03a,coat:SH(3,.006),pat:'calico'},
+        mainecoon:{name:'מיין קון',color:'rgb(150,108,70)',dark:0x2e2018,iris:0x9cae3a,coat:SH(6,.022,.008),pat:'tabby',chub:1.1,earK:1.25,tailR:1.6}};
+      for(const k in CATS)SPEC['cat_'+k]=catSpec(CATS[k]);
+      function catPat(kind0){const nz=(x,y,z)=>.5+.5*Math.sin(x*37+3)*Math.sin(y*29+5)*Math.sin(z*31+1),lo=(x,y,z)=>Math.sin(x*7.3+1.2)*Math.sin(y*6.1+.4)+Math.sin(z*9.7+x*3.1);
+        const cl=(v)=>Math.max(0,Math.min(1,v)),sm=(a,b,v)=>{const t=cl((v-a)/(b-a));return t*t*(3-2*t)};
+        const whiteBits=(p,n)=>{if(n==='jaw')return 1;if(n==='head')return (p[0]>.76&&p[1]<.975)?1:0;if(n==='trunk')return (p[0]>.3&&p[1]<.68)||p[1]<.52?1:0;if(n==='leg')return p[1]<.09?1:0;return 0};
+        return(p0,k)=>{const n=k.n,p=(n==='head'||n==='jaw'||n==='ear')?[p0[0]+.05,p0[1]+.08,p0[2]]:p0;let w=0,t=.95+.08*nz(p[0],p[1],p[2]),b=0;
+          if(kind0==='tabby'){w=whiteBits(p,n)*.85;let st=0;
+            if(n==='trunk'){st=sm(.25,.6,Math.sin(p[0]*34+Math.sin(p[1]*12)*1.2))*sm(.55,.75,p[1])}
+            else if(n==='leg'){st=sm(.3,.65,Math.sin(p[1]*46))*.8}
+            else if(n==='tail'){st=sm(.2,.6,Math.sin((p[1]-p[0])*30))}
+            else if(n==='head'){if(p[1]>1.07&&p[0]<.72)st=sm(.3,.7,Math.sin(p[2]*70+1.6))*.9;if(p[0]>.68&&p[1]<1.0&&Math.abs(p[2])>.06)st=Math.max(st,sm(.4,.8,Math.sin(p[1]*80))*.7)}
+            b=st*(1-w)*.85}
+          else if(kind0==='point'){if(n==='head')b=sm(.66,.8,p[0])*.92;else if(n==='ear'||n==='jaw')b=.95;else if(n==='leg')b=sm(.48,.2,p[1])*.9;else if(n==='tail')b=sm(.82,1.05,p[1]-(p[0]+.58)*.2)*.95+.2;else if(n==='trunk')b=sm(.7,.85,p[1])*.12;b=cl(b)}
+          else if(kind0==='tux'){w=whiteBits(p,n);if(n==='trunk'&&p[0]>.2&&p[1]<.74)w=1;if(n==='leg'&&p[1]<.2)w=1}
+          else if(kind0==='calico'){const l=lo(p[0],p[1],p[2]);w=whiteBits(p,n);if(n==='trunk'&&(p[1]<.6||p[0]>.32))w=1;if(n==='leg')w=p[1]<.35?1:0;
+            if(!w){w=sm(.45,.75,l);b=sm(-.2,-.5,l)}if(n==='ear')b=k.k===5&&p[2]>0?1:0}
+          return[w,t,b]}}
+
       /* ---- דפוסי צבע ---- */
-      function patOf(id,seed){const nz=(x,y,z)=>.5+.5*Math.sin(x*37+seed)*Math.sin(y*29+seed*2)*Math.sin(z*31+1);
+      function patOf(id,seed){if(SPEC[id]&&SPEC[id].pat)return catPat(SPEC[id].pat);const nz=(x,y,z)=>.5+.5*Math.sin(x*37+seed)*Math.sin(y*29+seed*2)*Math.sin(z*31+1);
         if(id==='lab')return(p,k)=>[0,(k.n==='nose'?.5:1)*(.96+.06*nz(p[0],p[1],p[2]))*(p[1]<.5&&k.n==='trunk'?1.04:1)];
+        if(id==='beagle')return(p,k)=>{const q=triPat(p,k);let w=q[0];if(k.n==='tail'&&p[1]>1.0)w=1;return[w,.96+.06*nz(p[0],p[1],p[2])]};
+        if(id==='dachshund')return(p,k)=>{let t=.95+.07*nz(p[0],p[1],p[2]);if(k.n==='ear')t*=.85;if(k.n==='trunk'&&p[1]>.76)t*=.9;if(k.n==='head'&&p[0]>.7)t*=.9;return[0,t]};
         if(id==='golden')return(p,k)=>{let w=0,t=.95+.08*nz(p[0],p[1],p[2]);if(k.n==='trunk'){if(p[1]<.5)w=.22;t*=p[1]>.78?.9:1}if(k.n==='head'&&p[0]>.62)t*=1.04;if(k.n==='ear')t*=.88;if(k.n==='tail')w=.1;return[w,t]};
         // שיצו: לבן בפנים, זקן, חזה, בטן ורגליים; צבע על האוזניים, הגב וסביב העיניים
         return(p,k)=>{let w=0,t=.97+.05*nz(p[0],p[1],p[2]);
@@ -223,12 +294,12 @@
         const TF=field(sp.trunk);rig.trunkF=TF;const tp=bodyPart(rig,trunk,TF,.023,{n:'trunk',k:0},coat,pat);
         const legs={},lparts={};
         [['fn',1,.11],['ff',1,-.11],['rn',0,.11],['rf',0,-.11]].forEach(([k,front,z])=>{const x=front?.27:-.32,Lg=grp(front?trunk:root,[x,.52,z]);
-          const LF=field(legSpec(front,z,sp.leg));lparts[k]=bodyPart(rig,Lg,LF,.018,{n:'leg',k:front?1:3,sl:.8},coat,pat);nails(Lg,nailPts(front,z));legs[k]=Lg});
+          const LF=field(legSpec(front,z,sp.leg));lparts[k]=bodyPart(rig,Lg,LF,.018,{n:'leg',k:front?1:3,sl:.8},coat,pat);if(!sp.cat)nails(Lg,nailPts(front,z));legs[k]=Lg});
         rig.legs=legs;
         const head=grp(trunk,[.36,.8,0]);rig.head=head;
         const HF=field([[sp.neck[0]],...sp.head.map((it,i)=>i===0?[it[0],.06]:it)]);const hp=bodyPart(rig,head,HF,.0135,{n:'head',k:2,sl:.85},coat,pat);
-        rig.eyes=[1,-1].map(s=>{const e=sp.eyes;return eye2(head,[e.at[0],e.at[1],e.at[2]*s],e.r,[e.dir[0],e.dir[1],e.dir[2]*s])});
-        nose3(head,sp.nose.at,sp.nose.r);
+        rig.eyes=[1,-1].map(s=>{const e=sp.eyes;return eye2(head,[e.at[0],e.at[1],e.at[2]*s],e.r,[e.dir[0],e.dir[1],e.dir[2]*s],sp.lid,{iris:sp.iris,slit:sp.cat})});
+        nose3(head,sp.nose.at,sp.nose.r,sp.noseCol);if(sp.dark)rig.dark=lin(sp.dark);
         const inside=new THREE.Mesh(SPH,new THREE.MeshStandardMaterial({color:lin(0x3a1418),roughness:.8}));const jx=sp.jaw[0][0].b,jc=[(jx[0]+jx[3])/2,(jx[1]+jx[4])/2+.012,0];
         inside.position.copy(V(jc)).sub(head.userData.abs);inside.scale.set((jx[3]-jx[0])*.45,.022,(jx[5]-jx[2])*.4);head.add(inside);
         const jaw=grp(head,[jc[0]-.09,jc[1]+.004,0]);rig.jaw=jaw;const JF=field(sp.jaw);bodyPart(rig,jaw,JF,.009,{n:'jaw',k:4},{shell:coat.shell&&{...coat.shell,n:2}},pat);
@@ -236,7 +307,12 @@
         const lipM=new THREE.MeshStandardMaterial({color:lin(0x2a1d18),roughness:.6});const lip=new THREE.Mesh(new THREE.TorusGeometry(1,.09,6,28,Math.PI),lipM);
         lip.position.copy(V([jc[0]+.005,jc[1]+.006,0])).sub(jaw.userData.abs);lip.rotation.x=Math.PI/2;lip.rotation.z=-Math.PI/2;lip.scale.set((jx[5]-jx[2])*.47,(jx[3]-jx[0])*.52,.08);jaw.add(lip);
         const tongue=new THREE.Mesh(SPH,new THREE.MeshStandardMaterial({color:lin(0xe2707f),roughness:.45}));tongue.position.copy(V([jc[0]+.02,jc[1]-.004,0])).sub(jaw.userData.abs);tongue.scale.set(.055,.012,.034);jaw.add(tongue);rig.tongue=tongue;
-        const ears=[1,-1].map(s=>{const ep=sp.earPivot,e=grp(head,[ep[0],ep[1],ep[2]*s]);const EF=field(sp.ear(s));const pp=bodyPart(rig,e,EF,.0085,{n:'ear',k:5,sl:.8},coat,pat);e.userData.part=pp;return e});rig.ears=ears;
+        const ears=[1,-1].map(s=>{const ep=sp.earPivot,e=grp(head,[ep[0],ep[1],ep[2]*s]);const EF=field(sp.ear(s));const pp=bodyPart(rig,e,EF,.0085,{n:'ear',k:5,sl:.8},coat,pat);e.userData.part=pp;
+          if(sp.cat){const ea=e.userData.abs,pk=new THREE.Mesh(new THREE.ConeGeometry(.052*(sp.earK||1),.15*(sp.earK||1),14),new THREE.MeshStandardMaterial({color:lin(0xe7a3ad),roughness:.75}));pk.scale.set(.3,1,1);pk.position.set(.024,.062*(sp.earK||1),s*.028);pk.rotation.x=s*.3;e.add(pk)}
+          return e});rig.ears=ears;
+        if(sp.cat){const wm=new THREE.MeshStandardMaterial({color:lin(sp.whisk||0xf4f0ea),roughness:.4}),hb=head.userData.abs;
+          [1,-1].forEach(s=>[[.02,.18],[-.004,.2],[-.026,.17]].forEach(([dy,dz])=>{const a=V([sp.nose.at[0]-.035,sp.nose.at[1]-.03+dy*.6,s*.04]),b=V([sp.nose.at[0]-.07,sp.nose.at[1]-.03+dy*2.4,s*(.04+dz)]),L=a.distanceTo(b);
+            const c=new THREE.Mesh(new THREE.CylinderGeometry(.0016,.0028,L,5),wm);c.position.copy(a).add(b).multiplyScalar(.5).sub(hb);c.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),b.clone().sub(a).normalize());head.add(c)}))}
         const tail=grp(trunk,sp.tailPivot);rig.tail=tail;const TLF=field(sp.tail);const tlp=bodyPart(rig,tail,TLF,.012,{n:'tail',k:6},coat,pat);
         const parts={trunk:tp,head:hp,tail:tlp,ears:ears.map(e=>e.userData.part),legs:lparts};
         hairFor(id,rig,parts,pat,rnd);
@@ -244,7 +320,7 @@
         const hb=head.userData.abs;const fitG=f=>{const g=new THREE.Group(),c=V(f.c).sub(hb),s=V(f.s);g.position.copy(c).add(V(f.o)).sub(c.clone().multiply(s));g.scale.copy(s);head.add(g);return g};
         rig.HW=fitG(sp.fit.H);rig.FW=fitG(sp.fit.F);rig.NW=fitG(sp.fit.N);
         const HC0=[.45,1.12,0],HR0=[.24,.21,.225],f=sp.fit.H;rig.HCabs=HC0.map((v,i)=>f.c[i]+f.o[i]+f.s[i]*(v-f.c[i]));rig.HRabs=HR0.map((v,i)=>v*f.s[i]);
-        rig.legR=sp.legR;rig.mouthP=sp.mouth;rig.cam=sp.cam;rig.tz=sp.tz;rig.defColor=sp.color;
+        rig.legR=sp.legR;rig.headC=sp.headC;rig.mouthP=sp.mouth;rig.cam=sp.cam;rig.tz=sp.tz;rig.defColor=sp.color;
         // שיצו: רגליים קצרות. כל הגוף יורד, והרגליים מתכווצות לגובה
         if(sp.legK){const k=sp.legK,dy=-.52*(1-k);rig.dy=dy;['fn','ff','rn','rf'].forEach(n=>{legs[n].scale.y=k;if(n[0]==='r')legs[n].position.y+=dy});trunk.position.y+=dy}
         shadow(root,1.75,.95);
@@ -252,7 +328,7 @@
         rig.hair=()=>{if(!rig.lockMeshes||!root.visible)return;root.updateMatrixWorld(true);rig.lockMeshes.forEach(m=>{if(!m.visible)return;const U=m.material.userData.U;
           m.getWorldQuaternion(_q);_d.copy(DN).applyQuaternion(_q.invert());_r.setFromUnitVectors(DN,_d.normalize());U.uRot.value.setFromMatrix4(_m4.makeRotationFromQuaternion(_r));U.uInvM.value.copy(m.matrixWorld).invert()})};
         rig.degrade=()=>{(rig.shellOdd||[]).forEach(m=>m.visible=false)};
-        rig.paint=(c,tri)=>paintRig(rig,c,tri);rig.paint(lin(new THREE.Color(sp.color).getHex()));
+        rig.paint=(c,tri)=>paintRig(rig,c,tri);{const tc=sp.color.startsWith('tri:');rig.paint(lin(new THREE.Color(sp.color.replace(/^tri:/,'')).getHex()),tc)}
         rig.shellCover=cv=>{rig.mats.forEach(m=>{const U=m.userData.U;if(!U)return;U.uCov.value=cv?1:0;if(!cv)return;U.uX0.value=cv.b0;U.uX1.value=cv.f0;U.uTilt.value=cv.tilt;U.uSB.value=cv.sb==null?-1:cv.sb;U.uHood.value=cv.headHood?1:0;U.uHC.value.set(...rig.HCabs);U.uHR.value.set(...rig.HRabs)})};
         return rig}
 
@@ -294,5 +370,5 @@
           locks(rig,P.tail,{n:320,rnd,wid:.045,seg:9,sel:()=>true,len:(p,r)=>.14+r()*.08,flow:(p,n)=>[.05,-.3,Math.sign(p[2]||rnd()-.5)*.45,.55],grav:1,clear:.01},pat);
         }
       }
-      return{build,SPEC,triPat,BLK,WHITE};
+      return{build,SPEC,triPat,BLK,WHITE,CATS};
     })();

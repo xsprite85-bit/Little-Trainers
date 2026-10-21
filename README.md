@@ -21,9 +21,26 @@ It writes two outputs from the same sources:
 ## Android
 
 Capacitor project in `android/` (app id `com.tinkerdoodle.littletrainers`), with the `@capacitor-community/text-to-speech` plugin because Android WebView has no speech synthesis, and the microphone permission.
-Every push to `main` that touches the app runs **Actions → Android build**, which uploads a debug APK (install on a phone for testing) and an **unsigned** release AAB. Signing for Google Play is added once the developer account exists.
+Every push to `main` that touches the app runs **Actions → Android build**, which uploads a debug APK (install on a phone for testing) and a release AAB. The `versionCode` is the Actions run number, so every upload is higher than the last.
+
+### Signing the release AAB
+
+The release AAB is signed with the Play **upload key** when these four repository secrets exist (Settings → Secrets and variables → Actions); without them it stays unsigned:
+
+| Secret | Value |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | the `.jks` file, base64-encoded (`base64 -w0 upload.jks`) |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias, e.g. `upload` |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+Create the key once with `keytool -genkeypair -v -keystore upload.jks -alias upload -keyalg RSA -keysize 2048 -validity 10000`, keep the file and passwords somewhere safe, and turn on Play App Signing so Google holds the app signing key (a lost upload key can then be reset through Play support).
 
 Locally: `npm ci && npm run android:sync`, then open `android/` in Android Studio.
+
+## Store assets
+
+`store/` holds the Google Play graphics: framed screenshots in Hebrew and English (`screens/`, 1080×1920), the feature graphic (1024×500) and a 512×512 icon. The listing texts and rating answers are in the store listing doc.
 
 ## Source layout (`src/`)
 
@@ -31,7 +48,7 @@ Locally: `npm ci && npm run android:sync`, then open `android/` in Android Studi
 |---|---|
 | `app.js` | All screens, state, users, games, care, wardrobe, learning cards, parents area, i18n runtime |
 | `avatar3d.js` | three.js scene, poodle + cat rigs, poses/tricks, clothes, fetch, snapshots |
-| `breeds.js` | Detailed dog breeds (Labrador, Golden, Shih Tzu) and the tricolour pattern; injected into `avatar3d.js` at `/*BREEDS*/` |
+| `breeds.js` | Detailed dog breeds (Labrador, Beagle, Golden, Dachshund, Shih Tzu), all cat breeds (tabby, Siamese, black, British shorthair, calico, Persian, tuxedo, Maine Coon) and their colour patterns; injected into `avatar3d.js` at `/*BREEDS*/` |
 | `engine.js` | Sound analysis (excitement/emotion estimate) and example sounds |
 | `nikud.js` | Hebrew niqqud dictionary (`NK`, `NKP`) |
 | `styles.css` | All styles |

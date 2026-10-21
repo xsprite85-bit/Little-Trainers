@@ -148,18 +148,22 @@ const GL=(()=>{
       return{root,head,jaw,ears,tail,eyes,tongue,furM,skinM,whiteM,stripeM,stripeTex:tex,body,cam:{y:.48,z:2.45,look:.42},tz:.8};
     }
 /*BREEDS*/
-    const rigs={dog:buildDog(),cat:buildCat()};
+    let cat0;try{cat0=BR.build('cat_tabby');cat0.cat2=true;cat0.breedId='tabby'}catch(e){console.warn('cat',e);cat0=buildCat()}
+    const rigs={dog:buildDog(),cat:cat0},CATRIGS={tabby:cat0};
     scene.add(rigs.dog.root,rigs.cat.root);
     {const P=rigs.dog;P.breed='poodle';['HW','FW','NW'].forEach(k=>{const g=new THREE.Group();P.head.add(g);P[k]=g});P.mouthP=[.32,.12,0]}
     const DOGS={poodle:rigs.dog};
     /* ---- גזעי חתולים: צבע פרווה, נקודות כהות, עיניים ומבנה גוף ---- */
     const CATB={tabby:{fur:0xd78a42,str:true,white:0xf2e6d8,eye:0xc9b23a},siamese:{fur:0x4a3326,body:0xeadcc8,white:0xeadcc8,eye:0x4f93e0},black:{fur:0x1d1b1e,body:0x1d1b1e,white:0x1d1b1e,eye:0xc2c43a},
       grey:{fur:0x7d8590,body:0x7d8590,white:0x8d959f,eye:0xd88a26,chub:1.12},persian:{fur:0xf3efe8,body:0xf3efe8,white:0xffffff,eye:0x4a8fd8,chub:1.15},tuxedo:{fur:0x1f1d1f,body:0x1f1d1f,white:0xf4f1ec,eye:0x9ccf3a}};
-    out.catBreeds=()=>Object.keys(CATB);
+    out.catBreeds=()=>BR.CATS?Object.keys(BR.CATS):Object.keys(CATB);
     /* ---- אביזרים לחתול: כובעים, קולרים, פפיון ומשקפיים ---- */
-    const CACC=(()=>{const R=rigs.cat,H=R.head,hb=H.userData.abs,rb=R.root.userData.abs||new THREE.Vector3(),A={};
+    const makeCACC=R=>{const H=R.head,hb=H.userData.abs,A={};
+      // מיקומים נכתבו לחתול הישן; בחתול החדש ממפים אותם סביב מרכז הראש ומגדילים
+      const N2=!!R.cat2,KS=1.42,HO=[.41,.64,0],HN=R.headC||[.64,1.02,0];
       const M=(c,o)=>new THREE.MeshStandardMaterial(Object.assign({color:lin(c),roughness:.5},o||{}));
-      const at=(g,p,par)=>{const b=par===H?hb:(par.userData.abs||new THREE.Vector3());g.position.set(p[0]-b.x,p[1]-b.y,p[2]-b.z);par.add(g);g.visible=false;return g};
+      const at=(g,p,par)=>{if(N2){par=H;const p0y=p[1],fc=p[0]>.5&&p[1]>.6;p=p.map((v,i)=>HN[i]+(v-HO[i])*KS);if(fc){p[0]-=.025;p[1]-=.028}if(p0y<.6){p[0]-=.06;p[1]-=.06}g.scale.multiplyScalar(KS)}
+        par=par||H;const b=par===H?hb:(par.userData.abs||new THREE.Vector3());g.position.set(p[0]-b.x,p[1]-b.y,p[2]-b.z);par.add(g);g.visible=false;return g};
       // כובע מסיבה
       {const g=new THREE.Group(),c=new THREE.Mesh(new THREE.ConeGeometry(.055,.14,24),M(0xff5fa2));c.position.y=.07;g.add(c);
         const pom=new THREE.Mesh(new THREE.SphereGeometry(.018,12,10),M(0xfff3a0));pom.position.y=.145;g.add(pom);
@@ -180,10 +184,14 @@ const GL=(()=>{
       [['sun',0x111318,0x111318],['heart',0xff4f8b,0xff9cc0]].forEach(([id,fr,ln])=>{const g=new THREE.Group(),fm=M(fr,{roughness:.3}),lm=M(ln,{roughness:.15,transparent:true,opacity:.85});
         [1,-1].forEach(sd=>{const r=new THREE.Mesh(new THREE.TorusGeometry(.024,.004,8,24),fm);r.rotation.y=Math.PI/2;r.position.z=sd*.052;g.add(r);const l=new THREE.Mesh(new THREE.CircleGeometry(.022,20),lm);l.rotation.y=Math.PI/2;l.position.set(.001,0,sd*.052);g.add(l)});
         const br=new THREE.Mesh(new THREE.CylinderGeometry(.003,.003,.05,6),fm);br.rotation.x=Math.PI/2;g.add(br);g.scale.setScalar(1.3);A[id]=at(g,[.556,.672,0],H)});
-      return A})();
-    out.catItems=()=>Object.keys(CACC);
-    out.dressCat=w=>{w=w||{};const on=new Set([w.hat,w.neck,w.face].filter(Boolean));for(const k in CACC)CACC[k].visible=on.has(k)};
-    out.setCatBreed=id=>{const b=CATB[id]||CATB.tabby,R=rigs.cat;R.furM.color.copy(lin(b.fur));R.skinM.color.copy(lin(b.fur)).multiplyScalar(.78);R.whiteM.color.copy(lin(b.white));
+      return A};
+    rigs.cat.acc=makeCACC(rigs.cat);let lastCW={};
+    out.catItems=()=>Object.keys(rigs.cat.acc);
+    out.dressCat=w=>{w=w||{};lastCW=w;const A=rigs.cat.acc,on=new Set([w.hat,w.neck,w.face].filter(Boolean));for(const k in A)A[k].visible=on.has(k)};
+    out.setCatBreed=id=>{if(rigs.cat.cat2){if(!BR.SPEC['cat_'+id])id='tabby';if(rigs.cat.breedId===id)return;
+        if(!CATRIGS[id]){try{const R=BR.build('cat_'+id);R.cat2=true;R.breedId=id;R.acc=makeCACC(R);if(out.lowGfx&&R.degrade)R.degrade();scene.add(R.root);CATRIGS[id]=R}catch(e){console.warn('cat breed',e);return}}
+        const vis=rigs.cat.root.visible;rigs.cat.root.visible=false;rigs.cat=CATRIGS[id];rigs.cat.root.visible=vis;out.dressCat(lastCW);if(animal==='cat')frame();return}
+      const b=CATB[id]||CATB.tabby,R=rigs.cat;R.furM.color.copy(lin(b.fur));R.skinM.color.copy(lin(b.fur)).multiplyScalar(.78);R.whiteM.color.copy(lin(b.white));
       if(b.str){R.stripeM.map=R.stripeTex;R.stripeM.color.setRGB(1,1,1)}else{R.stripeM.map=null;R.stripeM.color.copy(lin(b.body))}R.stripeM.needsUpdate=true;
       R.eyes.forEach(e=>{const m=e.children[0]&&e.children[0].material;if(m)m.color.copy(lin(b.eye))});const k=b.chub||1;R.body.scale.set(1,k,k)};
     function makeEQ(DG){
@@ -512,7 +520,7 @@ const GL=(()=>{
     const angLerp=(a,b,k)=>{let d=((b-a)%(2*Math.PI)+3*Math.PI)%(2*Math.PI)-Math.PI;return a+d*k};
     out._dbg=()=>({FT:FT&&{t0:FT.t0},fRun,ball:ball.position.toArray().map(v=>+v.toFixed(2)),root:rigs.dog.root.position.toArray().map(v=>+v.toFixed(2)),ry:+rigs.dog.root.rotation.y.toFixed(2)});
     const FTL=[750,1000,2350,2750,3000,4350,4600,5100,5400];
-    out.fetch=pw=>{if(animal!=='dog'||FT||!host)return 0;pw=Math.max(.55,Math.min(1.35,pw||1));anim=null;Object.assign(P,STAND);
+    out.catFetch=()=>!!rigs.cat.cat2;out.fetch=pw=>{if((animal!=='dog'&&!rigs.cat.cat2)||FT||!host)return 0;ball.children[0].material.color.copy(lin(animal==='cat'?0xe2465f:0xc6e43c));pw=Math.max(.55,Math.min(1.35,pw||1));anim=null;Object.assign(P,STAND);
       const Pt=new THREE.Vector3(-.72*pw,0,-1.45*pw),dir=Pt.clone().normalize(),stop=Pt.clone().addScaledVector(dir,-.62);
       FT={t0:lastNow,Pt,stop,a1:Math.atan2(-dir.z,dir.x),a2:Math.atan2(dir.z,-dir.x),drop:null};mood='alert';ball.visible=true;return FTL[8]};
     function fetchPose(now,R,t){const e=now-FT.t0,base=-.82+VW.yaw;let yaw=base,pos=_m.set(0,0,0);fRun=false;P.hp=0;
@@ -601,7 +609,7 @@ const GL=(()=>{
     out.stand=()=>{P.spin%=6.283;P.roll%=6.283;if(P.roll>3.14)P.roll-=6.283;return startAnim([[650,STAND]])};
     out.eat=()=>{eatUntil=performance.now()+1300};
     out.mouth=()=>{const R=rigs[animal];if(!host)return null;R.root.updateMatrixWorld(true);
-      const v=R.head.localToWorld(animal==='dog'?V(R.mouthP||[.34,.15,0]).add(new THREE.Vector3(.02,.03,0)):new THREE.Vector3(.24,.09,0)).project(cam);return{x:(v.x+1)/2,y:(1-v.y)/2}};
+      const v=R.head.localToWorld(animal==='dog'||R.cat2?V(R.mouthP||[.34,.15,0]).add(new THREE.Vector3(.02,.03,0)):new THREE.Vector3(.24,.09,0)).project(cam);return{x:(v.x+1)/2,y:(1-v.y)/2}};
     out.setMood=m=>{mood=m};
     out.snap=()=>{if(!host||!out.ok)return null;try{r.render(scene,cam);return canvas.toDataURL('image/png')}catch(e){return null}};
     let lastRGB=null,lastTri=false;
@@ -649,7 +657,7 @@ const GL=(()=>{
       R.root.rotation.x=P.roll;
       R.root.position.y=(host.classList.contains('bounce')?Math.abs(Math.sin(t*9))*.12:0)+P.jy+.24*(1-Math.cos(P.roll));
       R.root.rotation.order='YXZ';{const dz=-.24*Math.sin(P.roll),yw=R.root.rotation.y;R.root.position.z=dz*Math.cos(yw);R.root.position.x=(mood==='scared'?Math.sin(t*41)*.004:0)+dz*Math.sin(yw)}
-      if(FT&&animal==='dog')fetchPose(now,R,t);
+      if(FT&&(animal==='dog'||R.cat2))fetchPose(now,R,t);
       if(R.trunk){R.trunk.position.y=R.trunk.userData.abs.y+P.ty+(R.dy||0);R.trunk.rotation.z=P.tr;
         R.legs.fn.rotation.z=P.fn-P.tr;R.legs.fn.rotation.x=P.fo;R.legs.ff.rotation.z=P.ff-P.tr;R.legs.rn.rotation.z=P.rn;R.legs.rf.rotation.z=P.rf}
       if(R.trunk&&(walking||fRun)&&!anim){const w=Math.sin(t*(fRun?14:9));R.legs.fn.rotation.z=w*.6;R.legs.ff.rotation.z=-w*.6;R.legs.rn.rotation.z=-w*.6;R.legs.rf.rotation.z=w*.6;R.root.position.y+=Math.abs(Math.sin(t*9))*.03}
@@ -664,7 +672,7 @@ const GL=(()=>{
       R.tail.rotation.z=cur.tb*R.tz;R.tail.rotation.x=eating?Math.sin(t*16)*.8:Math.sin(t*cur.ws)*cur.wa;
       for(const f of ANIM)f(t);
       if(R.hair)R.hair();
-      if(FT&&animal==='dog')fetchBall(now,R);
+      if(FT&&(animal==='dog'||R.cat2))fetchBall(now,R);
       r.render(scene,cam);
     }
     requestAnimationFrame(tick);
