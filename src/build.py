@@ -30,9 +30,10 @@ open(os.path.join(ROOT, 'dist', 'index.html'), 'w', encoding='utf-8').write(dist
 # ---------- 2. standalone app (GitHub Pages + Android) ----------
 APP = os.path.join(ROOT, 'app')
 WEB = os.path.join(HERE, 'web')
-for sub in ('fonts', 'vendor', 'icons'):
+for sub in ('fonts', 'vendor', 'icons', 'voice'):
     shutil.rmtree(os.path.join(APP, sub), ignore_errors=True)
-    shutil.copytree(os.path.join(WEB, sub), os.path.join(APP, sub))
+    if os.path.isdir(os.path.join(WEB, sub)):
+        shutil.copytree(os.path.join(WEB, sub), os.path.join(APP, sub))
 FONTS = []
 for fam, file, weights in (('Noto Sans Hebrew', 'noto-sans-hebrew', (400, 500, 700)), ('Rubik', 'rubik', (400, 500, 700)), ('Varela Round', 'varela-round', (400,))):
     for w in weights:
@@ -43,7 +44,7 @@ app_html = ('<!doctype html>\n<html lang="he" dir="rtl">\n<head>\n<meta charset=
             '<title>מאלפים קטנים</title>\n' + META + '\n'
             '<link rel="manifest" href="manifest.webmanifest">\n<link rel="icon" href="icons/icon-192.png">\n<link rel="apple-touch-icon" href="icons/icon-192.png">\n'
             '<style>\n' + '\n'.join(FONTS) + '\nhtml,body{margin:0}\n' + CSS + '</style>\n</head>\n<body>\n'
-            '<div id="app" lang="he" dir="rtl"></div>\n<script src="vendor/three.min.js"></script>\n<script>\n' + JS + '</script>\n'
+            '<div id="app" lang="he" dir="rtl"></div>\n<script src="vendor/three.min.js"></script>\n<script>\n' + ('window.VOICE_ON=1;\n' if os.path.exists(os.path.join(WEB, 'voice', 'manifest.json')) else '') + JS + '</script>\n'
             "<script>if('serviceWorker' in navigator&&location.protocol==='https:'&&!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform()))navigator.serviceWorker.register('sw.js').catch(function(){})</script>\n"
             '</body>\n</html>\n')
 open(os.path.join(APP, 'index.html'), 'w', encoding='utf-8').write(app_html)
@@ -58,9 +59,10 @@ files = ['./', 'index.html', 'manifest.webmanifest', 'vendor/three.min.js'] + ['
 ver = hashlib.sha1(app_html.encode('utf-8')).hexdigest()[:10]
 sw = ("const V='lt-%s',F=%s;\n" % (ver, json.dumps(files)) +
       "self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(F)).then(()=>self.skipWaiting()))});\n"
-      "self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});\n"
+      "self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V&&x!=='lt-voice').map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});\n"
       "self.addEventListener('fetch',e=>{if(e.request.method!=='GET')return;const u=new URL(e.request.url);if(u.origin!==location.origin)return;\n"
       "  if(e.request.mode==='navigate'){e.respondWith(fetch(e.request).then(r=>{const c=r.clone();caches.open(V).then(x=>x.put('index.html',c));return r}).catch(()=>caches.match('index.html')));return}\n"
+      "  if(u.pathname.indexOf('/voice/')>=0){e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request).then(x=>{if(x.ok){const c=x.clone();caches.open('lt-voice').then(v=>v.put(e.request,c))}return x})));return}\n"
       "  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});\n")
 open(os.path.join(APP, 'sw.js'), 'w', encoding='utf-8').write(sw)
 if os.path.exists(os.path.join(WEB, 'privacy.html')):

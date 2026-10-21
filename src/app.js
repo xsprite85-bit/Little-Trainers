@@ -11,11 +11,11 @@ const DEFU=()=>[{id:'romi',name:'רוֹמִי',age:10,color:'#2e7cf6',animal:'do
 const S={who:null,users:DEFU(),playGone:0,nu:null,delId:null,screen:'login',animal:'dog',fur:'rgb(162,106,70)',baseline:null,sound:true,
   data:{romi:blank(),lia:blank()},res:null,busy:false,quiz:{lv:null,i:0,ok:0,ans:null},trick:null,
   timer:{left:180,total:180,run:false,h:null},sessClicks:0,gate:null,parentOK:false,sampleId:null,dogName:'פודי',lang:'he',puppy:true,editName:false,nk:true,nkSp:true,pron:{}};
-function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null');if(j){S.fur=j.fur||S.fur;S.baseline=j.baseline||null;S.sound=j.sound!==false;S.dogName=(typeof j.dogName==='string'&&j.dogName.trim())?j.dogName:'פודי';S.lang=j.lang==='en'?'en':'he';S.catBreed=typeof j.catBreed==='string'?j.catBreed:'tabby';S.real=(j.real&&typeof j.real==='object')?j.real:null;S.puppy=j.puppy!==false;S.nk=j.nk!==false;S.nkSp=j.nkSp!==false;S.pron=(j.pron&&typeof j.pron==='object')?j.pron:{};
+function load(){try{const j=JSON.parse(localStorage.getItem(KEY)||'null');if(j){S.fur=j.fur||S.fur;S.baseline=j.baseline||null;S.sound=j.sound!==false;S.dogName=(typeof j.dogName==='string'&&j.dogName.trim())?j.dogName:'פודי';S.lang=j.lang==='en'?'en':'he';S.catBreed=typeof j.catBreed==='string'?j.catBreed:'tabby';S.real=(j.real&&typeof j.real==='object')?j.real:null;S.puppy=j.puppy!==false;S.sayName=j.sayName===true;S.nk=j.nk!==false;S.nkSp=j.nkSp!==false;S.pron=(j.pron&&typeof j.pron==='object')?j.pron:{};
   if(Array.isArray(j.users))S.users=j.users.filter(u=>u&&typeof u.id==='string'&&typeof u.name==='string').map(u=>({id:u.id,name:u.name.slice(0,24),age:Math.max(2,Math.min(18,+u.age||6)),color:/^#[0-9a-f]{6}$/i.test(u.color)?u.color:UCOL[0],animal:u.animal==='cat'?'cat':'dog',mode:['auto','simple','full'].includes(u.mode)?u.mode:'auto',g:u.g==='m'?'m':'f'}));
   S.playGone=Math.max(0,+j.playGone||0);S.data={};
   S.users.forEach(u=>{S.data[u.id]=Object.assign(blank(),(j.data&&j.data[u.id])||{})})}}catch(e){}}
-function save(){try{localStorage.setItem(KEY,JSON.stringify({fur:S.fur,baseline:S.baseline,sound:S.sound,dogName:S.dogName,puppy:S.puppy,nk:S.nk,nkSp:S.nkSp,lang:S.lang,pron:S.pron,users:S.users,playGone:S.playGone,catBreed:S.catBreed,real:S.real,data:S.data}));return true}catch(e){return false}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({fur:S.fur,baseline:S.baseline,sound:S.sound,dogName:S.dogName,puppy:S.puppy,sayName:!!S.sayName,nk:S.nk,nkSp:S.nkSp,lang:S.lang,pron:S.pron,users:S.users,playGone:S.playGone,catBreed:S.catBreed,real:S.real,data:S.data}));return true}catch(e){return false}}
 load();
 
 /* ---------- זמן משחק נטו: נספר רק בזמן פעילות בפועל של ילדה מחוברת ---------- */
@@ -117,6 +117,20 @@ function unlockSpeech(){if(speechReady||!IOS||!window.speechSynthesis)return;spe
 document.addEventListener('pointerdown',unlockSpeech,{passive:true});
 const clean=t=>String(t).replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}\u{2190}-\u{21FF}]/gu,' ').replace(/\s+/g,' ').trim();
 let voiceOK=null;
+/* שמות הילדים לא נשלחים למנוע ההקראה, אלא אם ההורים הפעילו את זה */
+function noNames(t){if(S.sayName)return t;let o=String(t);
+  (S.users||[]).forEach(u=>{const n=String(u.name||'').replace(/[\u0591-\u05C7]/g,'').trim();if(!n)return;
+    const re=new RegExp('(^|[^\\u05D0-\\u05EAA-Za-z])[ולבהמשכ]?'+[...n].map(c=>c.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'[\\u0591-\\u05C7]*').join('')+'(?![\\u05D0-\\u05EAA-Za-z])','gi');o=o.replace(re,'$1')});
+  return o.replace(/\s+([,.!?])/g,'$1').replace(/([,.!?])(\s*[,.!?])+/g,'$1').replace(/^[\s,.!?]+/,'').replace(/\s{2,}/g,' ').replace(/,\s*$/,'').trim()}
+/* ---------- קול מוקלט מראש (אם קיים): קבצים לפי מפתח של הטקסט, אחרת מנוע המכשיר ---------- */
+const VOX={map:null,a:null,hook:null,
+  key(l,t){t=l+'|'+String(t).replace(/[\u0591-\u05C7]/g,'').replace(/\s+/g,' ').trim();let h=0x811c9dc5;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,0x01000193)>>>0}return h.toString(16).padStart(8,'0')},
+  load(){if(!window.VOICE_ON||VOX.map)return;VOX.map={};fetch('voice/manifest.json').then(r=>r.ok?r.json():{}).then(j=>{VOX.map=j||{}}).catch(()=>{})},
+  stop(){if(VOX.a){try{VOX.a.pause()}catch(e){}VOX.a=null}},
+  play(said,dog,narrator,done){const m=VOX.map;if(!m)return false;const k=VOX.key(S.lang,said);if(!m[k])return false;
+    try{VOX.stop();const a=new Audio('voice/'+k+'.mp3');VOX.a=a;a.preservesPitch=!dog;a.mozPreservesPitch=!dog;a.webkitPreservesPitch=!dog;
+      a.playbackRate=dog?(lia()?1.12:1.18):(lia()?.92:1);a.onended=done;const pr=a.play();if(pr&&pr.catch)pr.catch(()=>{VOX.map[k]=0});return true}catch(e){return false}}};
+VOX.load();
 function speak(text,kind,narrator){
   text=clean(catW(tr(gnd(text))));if(!text)return;
   const dog=!narrator&&S.puppy;
@@ -124,11 +138,15 @@ function speak(text,kind,narrator){
   if(av&&!narrator){av.classList.add('talk');clearTimeout(speak.t);speak.t=setTimeout(()=>av.classList.remove('talk'),dur)}
   if(!S.sound)return;
   if(dog)bark(kind||'yip');
-  {const nt=NTTS();if(nt){try{nt.stop().catch(()=>{});nt.speak({text:gndNk(pron(text)),lang:S.lang==='en'?'en-US':'he-IL',rate:dog?(lia()?.95:1.05):(lia()?.85:.95),pitch:dog?1.5:1,volume:1,category:'ambient'}).then(()=>{if(!narrator){clearTimeout(speak.t);const a=$('.avatar');if(a)a.classList.remove('talk')}}).catch(()=>{})}catch(e){}return}}
+  const said=noNames(text);if(!said)return;
+  if(VOX.hook)VOX.hook(S.lang,said);
+  if(VOX.play(said,dog,narrator,()=>{if(!narrator){clearTimeout(speak.t);const a=$('.avatar');if(a)a.classList.remove('talk')}})){try{const nt=NTTS();if(nt)nt.stop().catch(()=>{});else if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}return}
+  VOX.stop();
+  {const nt=NTTS();if(nt){try{nt.stop().catch(()=>{});nt.speak({text:gndNk(pron(said)),lang:S.lang==='en'?'en-US':'he-IL',rate:dog?(lia()?.95:1.05):(lia()?.85:.95),pitch:dog?1.5:1,volume:1,category:'ambient'}).then(()=>{if(!narrator){clearTimeout(speak.t);const a=$('.avatar');if(a)a.classList.remove('talk')}}).catch(()=>{})}catch(e){}return}}
   if(!window.speechSynthesis)return;
   try{
     if(speechSynthesis.speaking||speechSynthesis.pending)speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(gndNk(pron(text)));u.lang=S.lang==='en'?'en-US':'he-IL';const v=curVoice();if(v)u.voice=v;
+    const u=new SpeechSynthesisUtterance(gndNk(pron(said)));u.lang=S.lang==='en'?'en-US':'he-IL';const v=curVoice();if(v)u.voice=v;
     if(dog&&voiceOK!==false){u.pitch=1.6;u.rate=lia()?.95:1.05}else{u.pitch=1;u.rate=lia()?.85:.95}
     let started=false;u.onstart=()=>{started=true;voiceOK=true};
     u.onerror=()=>{if(dog)voiceOK=false};
@@ -550,6 +568,7 @@ V.parent=()=>{
    <button class="btn ghost" data-act="nkS">${S.nkSp?'ניקוד בהקראה: פועל':'ניקוד בהקראה: כבוי'}</button>
    <button class="btn ghost" data-act="stest">🗣️ בדיקת הקראה ותיקון הגייה</button>`}
    <button class="btn ghost" data-act="puppyT">${S.puppy?'🐶 קול כלבלבי פועל':'🙂 קול רגיל'}</button>
+   <button class="btn ghost" data-act="nameT">${S.sayName?'🗣️ הקראת שמות הילדים: פועלת':'🔕 הקראת שמות הילדים: כבויה'}</button><p class="muted">כשזה כבוי, שמות הילדים לא נשלחים למנוע הדיבור של המכשיר, והדמות מדלגת עליהם.</p>
    <p class="muted">לכל משתמש יש כלב משלו: שם, גזע, צבע פרווה, בגדים וכוכבים. את הגזע, הגיל והמצב משנים בפרופיל, ואת הצבע בארון הבגדים.</p>
    <p class="muted">לחיצה על כל טקסט במסך מקריאה אותו, כדי שגם ילדים שעוד לא קוראים יוכלו להשתמש לבד.</p>
    <p class="muted">${S.lang==='en'?'English':'קול דיבור בעברית'}: ${hv?'זמין במכשיר הזה':'לא נמצא במכשיר. הדמות תדבר בבועות טקסט ובתנועת פה.'}</p>
@@ -631,6 +650,7 @@ const A={
  smap:()=>{S.quiz={lv:null,i:0,ok:0,ans:null};render()},
  quizAgain:()=>{S.quiz={lv:null,i:0,ok:0,ans:null};render()},
  snd:()=>{S.sound=!S.sound;save();render()},
+ nameT:()=>{S.sayName=!S.sayName;save();render()},
  resetAll:()=>{S.users.forEach(u=>{const keep=pBox(u.id),old=S.data[u.id]||{},d=blank();d.play=keep;if(old.breed)d.breed=old.breed;if(old.fur)d.fur=old.fur;if(old.dogName)d.dogName=old.dogName;S.data[u.id]=d});save();toast('האיפוס בוצע')},
  calReset:()=>{S.baseline=null;save();render()},
  calib:async()=>{const m=$('#calMsg');try{m.textContent='מקליטים... תנו לכלב להשמיע קול רגוע.';const r=await recordMic(8);setCal(Engine.analyze(r.x,r.sr))}catch(e){m.textContent='אין גישה למיקרופון. אפשר להעלות קובץ הקלטה או לקבוע את הערך ידנית.'}}

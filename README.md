@@ -38,6 +38,12 @@ Create the key once with `keytool -genkeypair -v -keystore upload.jks -alias upl
 
 Locally: `npm ci && npm run android:sync`, then open `android/` in Android Studio.
 
+## Recorded voice (optional)
+
+The phone's Hebrew voice makes many mistakes, so the app can play pre-recorded clips instead. `tools/voice/harvest.js` opens the app in a headless browser and collects every line it speaks (children's names are removed first), and `tools/voice/record.js` records each line once with an Azure neural voice into `src/web/voice/` (MP3 + `manifest.json`). At runtime `speak()` plays the clip when one exists and falls back to the device voice otherwise, so lines with a custom pet name still work. Nothing is sent anywhere while the app runs.
+
+To record: add the `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION` secrets, then run **Actions → Record voice** (choose Hila or Avri). It commits the clips and starts a new Android build. The Claude artifact keeps using the device voice.
+
 ## Store assets
 
 `store/` holds the Google Play graphics: framed screenshots in Hebrew and English (`screens/`, 1080×1920), the feature graphic (1024×500) and a 512×512 icon. The listing texts and rating answers are in the store listing doc.

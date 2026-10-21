@@ -1,0 +1,55 @@
+name: Record voice
+
+# Run by hand from Actions → Record voice. Needs the AZURE_SPEECH_KEY and AZURE_SPEECH_REGION secrets.
+on:
+  workflow_dispatch:
+    inputs:
+      voice_he:
+        description: Hebrew voice
+        default: he-IL-HilaNeural
+        type: choice
+        options: [he-IL-HilaNeural, he-IL-AvriNeural]
+      voice_en:
+        description: English voice
+        default: en-US-AnaNeural
+      rerecord:
+        description: Record everything again (after changing voice)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - name: Build the app
+        run: python3 src/build.py
+      - name: Browser for collecting the lines
+        run: npm i --no-save playwright@1.49.1 && npx playwright install --with-deps chromium
+      - name: Collect every spoken line
+        run: node tools/voice/harvest.js
+      - name: Record
+        env:
+          AZURE_SPEECH_KEY: ${{ secrets.AZURE_SPEECH_KEY }}
+          AZURE_SPEECH_REGION: ${{ secrets.AZURE_SPEECH_REGION }}
+          VOICE_HE: ${{ inputs.voice_he }}
+          VOICE_EN: ${{ inputs.voice_en }}
+        run: |
+          if [ "${{ inputs.rerecord }}" = "true" ]; then rm -rf src/web/voice; fi
+          node tools/voice/record.js
+      - name: Rebuild and commit
+        run: |
+          python3 src/build.py
+          git config user.name "voice-bot"
+          git config user.email "voice-bot@users.noreply.github.com"
+          git add src/web/voice tools/voice/lines.json app dist
+          if ! git diff --cached --quiet; then git commit -m "Record voice lines" && git push && gh workflow run android.yml --ref main; fi
+        env:
+          GH_TOKEN: ${{ github.token }}
